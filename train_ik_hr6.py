@@ -9,7 +9,7 @@ from torch.nn import functional as F
 from meta import Meta
 import  argparse
 import numpy as np
-from sym_forward_kinematic_back import *
+from fk_models import *
 from models import ann_model
 import pandas as pd
 import matplotlib as mpl
@@ -25,9 +25,9 @@ def main(args):
     is_delta_model = args.is_delta_model
 
     # q_0 = np.array([1.33,-1.25,0.25,0.29,0.2,0.2,0])
-    # dobot = get_Robot_()
-    # DH_dobot = dobot.cal_fk(q_0)
-    # print(DH_dobot)
+    # pku_hr6 = get_Robot_()
+    # DH_pku_hr6 = pku_hr6.cal_fk(q_0)
+    # print(DH_pku_hr6)
     if not is_delta_model:
         if generate_:
             inputs, outputs, test_inputs, test_outputs = generate_data(1000, is_fk=args.is_fk)
@@ -35,10 +35,10 @@ def main(args):
             inputs, outputs, test_inputs, test_outputs = load_data("real_data.txt", is_fk=args.is_fk)
     else:
         q_0 = np.array([1.33,1.02,0.25,0.29,0.3,0.2])
-        dobot = get_Robot_()
-        DH_dobot = dobot.cal_fk(q_0)
-        # print(DH_dobot)
-        p_0 = np.array(DH_dobot[:,-1][0:3])
+        pku_hr6 = get_Robot()
+        DH_pku_hr6 = pku_hr6.cal_fk(q_0)
+        # print(DH_pku_hr6)
+        p_0 = np.array(DH_pku_hr6[:,-1][0:3])
         inputs, outputs, test_set, delta_p_range, delta_q_range = generate_delta_data(q_0, p_0)
         test_inputs = np.array(test_set[0])
         test_outputs = np.array(test_set[1])
@@ -86,12 +86,13 @@ def main(args):
     losses = []
     batch_size = args.batch_size
     if args.generate_data:
-        dobot = get_Robot_()
+        pku_hr6 = get_Robot()
     losses_train = []
     losses_test = []
     batch_loss = []
     for i in range(args.epoch):
-        if i % 1==0:
+        if i % 10==0:
+            # for test
             with torch.no_grad():
                 losses.append(np.mean(batch_loss))
                 test_x = torch.tensor(test_set[0], dtype = torch.float, requires_grad = False)
@@ -104,7 +105,7 @@ def main(args):
                     rands = np.random.choice(prediction_.data.numpy().shape[0])
                     joint_1 = [delta_q_i * delta_q_range[1] + delta_q_range[0] +\
                                  q_0 for delta_q_i in prediction_.data.numpy()]
-                    p_pre = np.array([dobot.cal_fk(joint_i)[:,-1][0:3] for joint_i in joint_1])
+                    p_pre = np.array([pku_hr6.cal_fk(joint_i)[:,-1][0:3] for joint_i in joint_1])
                     p_real = [  p_0 + inputs_[0:3] * delta_p_range[1] + delta_p_range[0] \
                                 for inputs_ in test_x.data.numpy()]
 
@@ -126,7 +127,7 @@ def main(args):
                     test_x = torch.tensor(test_set[0], dtype = torch.float, requires_grad = False)
                     prediction_ = ik_nn(test_x)
                     joint_1 = [q_i for q_i in prediction_.data.numpy()]
-                    p_pre = np.array([dobot.cal_fk(joint_i)[:,-1][0:3] for joint_i in joint_1])
+                    p_pre = np.array([pku_hr6.cal_fk(joint_i)[:,-1][0:3] for joint_i in joint_1])
                     p_real = [inputs_[0:3] for inputs_ in test_x.data.numpy()]
                     dist_0 = []
                     for i in range(0,p_pre.shape[0]):
@@ -195,7 +196,7 @@ if __name__ == "__main__":
     argparser.add_argument('--generate_data', type=bool, \
                                 help='generate radom datas or using true data', default=True)
     argparser.add_argument('--is_delta_model', type=bool, \
-                                help='if needs to train a delta_p -> delta_q models', default=True)
+                                help='if needs to train a delta_p -> delta_q models', default=False)
     
     args = argparser.parse_args()
     main(args)

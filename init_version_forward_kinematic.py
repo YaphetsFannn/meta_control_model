@@ -1,6 +1,7 @@
 # -*- coding: UTF-8 -*-
 """
-    @description: forward kinematic models of a 4 DOF robot arm, change DH_ and joint size to change DOF
+    @description: forward kinematic models of a 4 DOF robot arm, 
+    change DH_ and joint size to change DOF
 """
 import numpy as np
 import math
