@@ -18,7 +18,7 @@ from sympy import symbols as sb
 from sympy import *
 import warnings
 import requests
-
+import random
 
 warnings.filterwarnings("ignore")
 
@@ -55,6 +55,8 @@ class FK():
         self.A = DH_[1][:]
         self.D = DH_[2][:]
         self.theta = DH_[3][:]
+        self.A_init = DH_[1][:]
+        self.D_init = DH_[2][:]
         # print("self.d is ", self.D)
         
     def rotate(self, axis, deg):
@@ -83,6 +85,15 @@ class FK():
         # print(dis)
         trans_mat[AXIS.index(axis), 3] = dis
         return trans_mat
+    
+    def change_DH_to_random(self):
+        # change link lenth with randoms
+        self.A = [A_init_nums * random.uniform(0.9,1.1) + random.uniform(-0.5,0.5) for A_init_nums in self.A_init]
+        self.D = [D_init_nums * random.uniform(0.9,1.1) + random.uniform(-0.5,0.5) for D_init_nums in self.D_init]
+
+    def change_DH_to_init(self):
+        self.A = [A_init_num for A_init_num in self.A_init]
+        self.D = [D_init_num for D_init_num in self.D_init]
 
     def get_DH(self,joints):
         if len(joints)==len(self.alpha)-1:
@@ -163,16 +174,24 @@ def load_data(file, is_fk = True, test_data_scale = 0.8):
         q = []
         for line in lines:
             datas = line.split(" ")
-            p.append([float(x) for x in datas[0:3]])
+            p_tmp = [float(x) for x in datas[0:3]]
+            # !!!!!!!!!!!here!!!!!!!!!  posintion[x,y,z](real) = [-y,-z,x](in fk models)            
+            position = [p_tmp[2],-p_tmp[0],-p_tmp[1]]
+            p.append(position)
             q.append([float(x)/180 * np.pi for x in datas[3:-1]])
         q = np.array(q)
         p = np.array(p)
-    inputs = q
-    outputs = p
-    test_set = [inputs[int(inputs.shape[0]*test_data_scale):-1], outputs[int(inputs.shape[0]*test_data_scale):-1]]
+    inputs = p
+    outputs = q
+    p_range = [p.min(0), p.max(0) - p.min(0)]
+    q_range = [q.min(0), q.max(0) - q.min(0)]
+    inputs = np.array(noramlization(inputs))
+    outputs = np.array(noramlization(outputs))
+    test_set = [inputs[int(inputs.shape[0]*test_data_scale):-1], 
+                outputs[int(inputs.shape[0]*test_data_scale):-1]]
     inputs = inputs[0:int(q.shape[0]*test_data_scale)]
     outputs = outputs[0:int(p.shape[0]*test_data_scale)]
-    return inputs, outputs, test_set[0], test_set[1]
+    return inputs, outputs, test_set[0], test_set[1],p_range,q_range
 
 
 def distance(positions_a, positions_b):
@@ -195,50 +214,56 @@ def noramlization(data,has_equle=False):
     return normData
 
 def generate_delta_data(q_0,p_0, data_nums = 500, test_data_scale = 0.8):
-        """
-        生成围绕p_0，以输入为 delta_p,输出为 delta_q 的数据
-        """
-        q, p, _, _ = generate_data(data_nums, q_0, test_data_scale = 1, is_delta = True,
-         delta_range = np.pi/10)
-        delta_p = np.array([p_i - p_0 for p_i in p])
-        delta_q = np.array([q_i - q_0 for q_i in q])
+    """
+    生成围绕p_0，以输入为 delta_p,输出为 delta_q 的数据
+    """
+    q, p, _, _ ,_,_= generate_data(data_nums, q_0, test_data_scale = 1, is_delta = True,
+        delta_range = np.pi/10)
+    delta_p = np.array([p_i - p_0 for p_i in p])
+    delta_q = np.array([q_i - q_0 for q_i in q])
 
-        # delta_p = [p_.extend(delta_p_) for p_,delta_p_ in zip(p,delta_p)]
-        # delta_p = [delta_p_.extend(q_) for q_,delta_p_ in zip(q,delta_p)]
-        # delta_p = np.hstack((p,delta_p))
-        # delta_p = np.hstack((delta_p,q))
-        delta_p = np.array(delta_p)
-        print("delta_p.shape",delta_p.shape)
-        delta_p_range = [delta_p.min(0), delta_p.max(0) - delta_p.min(0)]
-        delta_q_range = [delta_q.min(0), delta_q.max(0) - delta_q.min(0)]
+    # delta_p = [p_.extend(delta_p_) for p_,delta_p_ in zip(p,delta_p)]
+    # delta_p = [delta_p_.extend(q_) for q_,delta_p_ in zip(q,delta_p)]
+    # delta_p = np.hstack((p,delta_p))
+    # delta_p = np.hstack((delta_p,q))
+    delta_p = np.array(delta_p)
+    print("delta_p.shape",delta_p.shape)
+    delta_p_range = [delta_p.min(0), delta_p.max(0) - delta_p.min(0)]
+    delta_q_range = [delta_q.min(0), delta_q.max(0) - delta_q.min(0)]
 
-        # p_0_s = [p_0 for i in range(p.shape[0])]
-        # inputs = np.hstack((delta_p,q))
-        inputs = np.array(delta_p)
-        inputs = np.array(noramlization(inputs))
-        outputs = np.array(noramlization(delta_q))
-        test_set = [inputs[int(inputs.shape[0] * test_data_scale):-1], 
-                outputs[int(inputs.shape[0] * test_data_scale):-1]]
-        inputs = inputs[0:int(q.shape[0] * test_data_scale)]
-        outputs = outputs[0:int(p.shape[0] * test_data_scale)]
-        return inputs, outputs,test_set, delta_p_range, delta_q_range
+    # p_0_s = [p_0 for i in range(p.shape[0])]
+    # inputs = np.hstack((delta_p,q))
+    inputs = np.array(delta_p)
+    inputs = np.array(noramlization(inputs))
+    outputs = np.array(noramlization(delta_q))
+    test_set = [inputs[int(inputs.shape[0] * test_data_scale):-1], 
+            outputs[int(inputs.shape[0] * test_data_scale):-1]]
+    inputs = inputs[0:int(q.shape[0] * test_data_scale)]
+    outputs = outputs[0:int(p.shape[0] * test_data_scale)]
+    return inputs, outputs,test_set, delta_p_range, delta_q_range
 
 def generate_data(data_nums = 1000, q_e =[0,0,0,0,0,0], is_fk = True, 
-                test_data_scale = 0.5, is_delta = False,
+                test_data_scale = 0.8, is_delta = False,
                 delta_range = 0):
     # (0,512) (0,512) (-298,302),(0,53),(-438,101),(-358,120)
+    # (0,pi),(0,pi)
     q = []
     p = []
     with open("data.txt","w") as wf:
         # pre_joint = np.random.rand(4) * np.pi
         # step = 0.1
-        robot_ = get_Robot()        
+        robot_ = get_Robot()
+        uniform_ = [(pi/2,pi),(pi/3,pi*3/4),(-pi/2,pi/2),(0,pi/12),(-pi/2,pi/6),(-pi/2,pi/6)]
         for i in range(data_nums):
             if is_delta:
-                joint = q_e + np.random.rand(6) * delta_range      
+                joint = q_e + np.random.rand(6) * delta_range
                 # joint[-1] = 0
             else:
-                joint = np.random.rand(6) * np.pi/2
+                joint = []
+                for ranges in uniform_:
+                    joint_ = random.uniform(ranges[0],ranges[1])
+                    joint.append(joint_)
+                # np.random.rand(6) * np.pi/2
                 # joint[-1] = 0
             q.append(joint)
             # print("joint is ", joint)
@@ -246,7 +271,12 @@ def generate_data(data_nums = 1000, q_e =[0,0,0,0,0,0], is_fk = True,
             # print(DH_robot_)
             p.append(DH_robot_[:,-1][0:3])
 
-            wf.write(str(np.concatenate((joint,DH_robot_[:,-1][0:3]))))
+            for joint_ in joint:
+                wf.write(str(round(joint_,2))+",")
+            for j in range(3):
+                wf.write(str(round(p[-1][j],2)))
+                if j!=2:
+                    wf.write(",")
             wf.write('\n')
         p = np.array(p)
         q = np.array(q)
@@ -256,17 +286,19 @@ def generate_data(data_nums = 1000, q_e =[0,0,0,0,0,0], is_fk = True,
     else:
         inputs = p
         outputs = q
-    # inputs = noramlization(inputs)
-    # outputs = noramlization(outputs,True)
+    p_range = [p.min(0), p.max(0) - p.min(0)]
+    q_range = [q.min(0), q.max(0) - q.min(0)]
+    inputs = np.array(noramlization(inputs))
+    outputs = np.array(noramlization(outputs))
     test_set = [inputs[int(inputs.shape[0]*test_data_scale):-1], 
                 outputs[int(inputs.shape[0]*test_data_scale):-1]]
     inputs = inputs[0:int(q.shape[0]*test_data_scale)]
     outputs = outputs[0:int(p.shape[0]*test_data_scale)]
-    return inputs, outputs, test_set[0], test_set[1]
+    return inputs, outputs, test_set[0], test_set[1],p_range,q_range
 
 
 if __name__ == "__main__":
-    joints = [0,0,0,0,0,0]
+    joints = [1.786661884592403,3.034546055548815,0.9951417076760611,0.1816047499998016,0.2123049364177343,-0.458526236335002]
     robot = get_Robot()
     pos = robot.cal_fk(joints)
     print("position is:")

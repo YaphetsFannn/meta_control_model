@@ -6,16 +6,39 @@ import  torch
 from torch import nn
 from torch import optim
 from torch.nn import functional as F
-from meta import Meta
+# from meta import Meta
 import  argparse
 import numpy as np
 from fk_models import *
-from models import ann_model
-import pandas as pd
+from models import *
+# import pandas as pd
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 
+#整体模型架构
+config = [
+    ('linear', [3, 32]),
+    ('relu', [True]),
+    ('bn', [32]),
+
+    ('linear', [32, 128]),
+    ('relu', [True]),
+    # ('bn', [128]),
+
+    # ('linear', [256, 128]),
+    # ('relu', [True]),
+    # # ('bn', [128]),
+
+    ('linear', [128, 32]),
+    ('relu', [True]),
+    # ('bn', [32]),
+
+    ('linear', [32, 6]),
+    # ('sigmoid', [True])
+]
+p_range, q_range = [],[]
 def main(args):
+    global config,p_range, q_range
     torch.manual_seed(222)
     torch.cuda.manual_seed_all(222)
     np.random.seed(222)
@@ -30,9 +53,9 @@ def main(args):
     # print(DH_pku_hr6)
     if not is_delta_model:
         if generate_:
-            inputs, outputs, test_inputs, test_outputs = generate_data(1000, is_fk=args.is_fk)
+            inputs, outputs, test_inputs, test_outputs, p_range, q_range = generate_data(1000, is_fk=args.is_fk)
         else:
-            inputs, outputs, test_inputs, test_outputs = load_data("real_data.txt", is_fk=args.is_fk)
+            inputs, outputs, test_inputs, test_outputs, p_range, q_range = load_data("./data/data.txt", is_fk=args.is_fk)
     else:
         q_0 = np.array([1.33,1.02,0.25,0.29,0.3,0.2])
         pku_hr6 = get_Robot()
@@ -49,49 +72,28 @@ def main(args):
     print("inputs.shape, outputs.shape ", inputs.shape, outputs.shape)
     print("inputs[0]: ", inputs[0])
     print("outputs[0]: ", outputs[0])
+    print("p_range: ", p_range)
+    print("q_range: ", q_range)
     input_size = inputs.shape[1]
     hidden_size = args.hidden_size
     hidden_layer = args.hidden_layer
     output_size = outputs.shape[1]
-
-    #整体模型架构
-    config = [
-        ('linear', [input_size, 128]),
-        ('relu', [True]),
-        # ('bn', [128]),
-
-        ('linear', [128, 128]),
-        ('relu', [True]),
-        # ('bn', [128]),
-
-        ('linear', [128, 128]),
-        ('relu', [True]),
-        # ('bn', [128]),
-
-        ('linear', [128, 128]),
-        ('relu', [True]),
-        # ('bn', [128]),
-
-        ('linear', [128, output_size]),
-        # ('sigmoid', [True])
-    ]
 
     ik_nn = ann_model(config)
 
     #损失函数
     cost = torch.nn.MSELoss(reduction='mean')
     #参数
-    optimizer_ik = torch.optim.Adam(ik_nn.parameters(), lr = 0.001)
+    optimizer_ik = torch.optim.Adam(ik_nn.parameters(), lr = 0.001,betas=(0.9,0.999))
     # 训练网络
     losses = []
     batch_size = args.batch_size
-    if args.generate_data:
-        pku_hr6 = get_Robot()
+    pku_hr6 = get_Robot()
     losses_train = []
     losses_test = []
     batch_loss = []
     for i in range(args.epoch):
-        if i % 10==0:
+        if i % 5==0:
             # for test
             with torch.no_grad():
                 losses.append(np.mean(batch_loss))
@@ -126,9 +128,9 @@ def main(args):
                 else:
                     test_x = torch.tensor(test_set[0], dtype = torch.float, requires_grad = False)
                     prediction_ = ik_nn(test_x)
-                    joint_1 = [q_i for q_i in prediction_.data.numpy()]
+                    joint_1 = [q_i * q_range[1] + q_range[0] for q_i in prediction_.data.numpy()]
                     p_pre = np.array([pku_hr6.cal_fk(joint_i)[:,-1][0:3] for joint_i in joint_1])
-                    p_real = [inputs_[0:3] for inputs_ in test_x.data.numpy()]
+                    p_real = [inputs_[0:3]*p_range[1] + p_range[0] for inputs_ in test_x.data.numpy()]
                     dist_0 = []
                     for i in range(0,p_pre.shape[0]):
                         tmp = np.array(p_pre[i] - p_real[i], dtype=np.float64)
@@ -154,8 +156,10 @@ def main(args):
     loss_mean = []
     for i in range(len(losses_train)):
         loss_i = np.array(losses_train[i])
-        loss_min.append(loss_i.min())
-        loss_max.append(loss_i.max())
+        # loss_min.append(loss_i.min())
+        # loss_max.append(loss_i.max())
+        loss_min.append(np.percentile(loss_i,25))
+        loss_max.append(np.percentile(loss_i,75))
         loss_mean.append(loss_i.mean())
  
     # plt.legend(loc='lower right', frameon=False) # 图例在图形里面
@@ -171,12 +175,32 @@ def main(args):
                     color='b',
                     alpha=0.2)
     plt.show()
-    torch.save(ik_nn, "./model_trained/net.pkl")
+    PATH = "./model_trained/net_param.pkl"
+    torch.save(ik_nn.state_dict(), PATH)
+    with open("./model_trained/min_max.txt","w") as wf:
+        for min_q in q_range[0]:
+            wf.write(str(min_q)+",")
+        for i in range(6):
+            wf.write(str(q_range[1][i]))
+            if i != 5:
+                wf.write(",")
+            else:
+                wf.write("\n")
+        for min_p in p_range[0]:
+            wf.write(str(min_p)+",")
+        for i in range(3):
+            wf.write(str(p_range[1][i]))
+            if i != 2:
+                wf.write(",")
+            else:
+                wf.write("\n")
+        
+    # torch.save(ik_nn, "./model_trained/net.pkl")
 
 
 if __name__ == "__main__":
     argparser = argparse.ArgumentParser()
-    argparser.add_argument('--epoch', type=int, help='epoch number', default=100)
+    argparser.add_argument('--epoch', type=int, help='epoch number', default=50)
     argparser.add_argument('--n_way', type=int, help='n way', default=5)
     argparser.add_argument('--k_spt', type=int, help='k shot for support set', default=1)
     argparser.add_argument('--k_qry', type=int, help='k shot for query set', default=15)
@@ -194,7 +218,7 @@ if __name__ == "__main__":
     argparser.add_argument('--batch_size', type=int, help='update steps for finetunning', default=40)
     argparser.add_argument('--is_fk', type=bool, help='if is foward', default=False)
     argparser.add_argument('--generate_data', type=bool, \
-                                help='generate radom datas or using true data', default=True)
+                                help='generate radom datas or using true data', default=False)
     argparser.add_argument('--is_delta_model', type=bool, \
                                 help='if needs to train a delta_p -> delta_q models', default=False)
     

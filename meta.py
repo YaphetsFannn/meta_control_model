@@ -8,7 +8,7 @@ import  numpy as np
 
 # from    learner import Learner
 from models import *
-from forward_kinematic import *
+from fk_models import *
 
 from    copy import deepcopy
 
