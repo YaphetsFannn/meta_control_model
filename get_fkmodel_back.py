@@ -4,7 +4,7 @@
         read datas from "./data/frame_data_0301.txt" or others
         outputs length of links to "links.txt"
         only estimate 6 link_length
-        not use mse, only grad
+        only calculate x
 """
 import numpy as np
 import math
@@ -153,21 +153,17 @@ def gradient(x,y,coeff):
     return total_gradient
 
 # input x[m,n],coeff_init[n],y[m,1]
-def gradient_decent(x,y,coeff_init,lr_start,epoch,decay=0):
+def gradient_decent(x,y,coeff_init,lr,epoch):
     m = x.shape[0]
     n = coeff_init.shape[0]
     coeff = copy.copy(coeff_init)
     losses = []
-    lr = lr_start
     for i in range(epoch):
-        lr = lr_start * 1.0 /(1.0 + decay*i)
-        coeff_gradient = [0 for _ in range(n)]
+        coeff_gradient = [0 for i in range(n)]
         for j in range(0,m):
             for k in range(n):
                 coeff_gradient[k] += (1.0/m) * x[j][k] * gradient(x[j],y[j],coeff)
         for k in range(n):
-            if k == 0:
-                continue
             coeff[k] = coeff[k] - lr*coeff_gradient[k]
         losses.append(loss(x,y,coeff).mean())
     return coeff,losses
@@ -187,13 +183,12 @@ if __name__ == "__main__":
     Robot_ = get_Robot_()
     # print("outputs shape is ",outputs.shape)
     load_raw_data = True
-    coeff_A = []
+    coeff_ = [[],[],[]]
     outputs = []
     if load_raw_data:
-        coeff_out = []
+        coeff_out = [[],[],[]]
         files = "./data/frame_data_0301.txt"
         inputs_,outputs_,test_inputs,test_outputs = load_data(files)
-        outputs_xyz = []
         for joints,positions in zip(inputs_,outputs_):
             fk_array = Robot_.cal_fk(joints)
             # a1 a7 d1 d3 d5
@@ -208,39 +203,42 @@ if __name__ == "__main__":
                 d5_ = position[i].evalf(subs={a1:0,a7:0,d1:0,d3:0,d5:1})
                 # print(a1_,a7_,d1_,d3_,d5_)
                 if i ==0 :
-                    tmp_coeff = [a1_,a7_,0,d3_,d5_,1,0,0]
-                    coeff_out.append(tmp_coeff)
-                    outputs_xyz.append(positions[i])
+                    tmp_coeff = [a1_,a7_,d3_,d5_]
                 elif i== 1:
-                    tmp_coeff = [0,a7_,d1_,d3_,d5_,0,1,0]
+                    tmp_coeff = [a7_,d1_,d3_,d5_]
                 else:
-                    tmp_coeff = [a1_,a7_,0,d3_,d5_,0,0,1]
-
-                    
+                    tmp_coeff = [a1_,a7_,d3_,d5_]
+                coeff_out[i].append(tmp_coeff)
         coeff_out = np.array(coeff_out)
-        outputs_file =  "./data/coeff_sub_03_16.txt"
+        outputs_file =  "./data/coeff_sub_03_01.txt"
         with open(outputs_file,"w") as wf:
-            for coeffs,Y in zip(coeff_out,outputs_xyz):
-                for coeff in coeffs:
-                    wf.write(str(coeff))
-                    wf.write(",")
-                wf.write(str(Y)+'\n')
+            for j in range(coeff_out[1].shape[0]):
+                for i in range(3):
+                    for k in range(coeff_out[i].shape[1]):
+                        wf.write(str(coeff_out[i][j][k]))
+                        if k == coeff_out[i].shape[1] - 1:
+                            wf.write(',')
+                        else:
+                            wf.write(' ')
+                wf.write(str(outputs_[j][0])+','+str(outputs_[j][1])+','+str(outputs_[j][2]))
+                wf.write('\n')
 
-
-    files = "./data/coeff_sub_03_16.txt"
+    files = "./data/coeff_sub_03_01.txt"
     with open(files) as rf:
         lines = rf.readlines()
-        shuffle(lines)
         for line in lines:
-            datas = line.strip().split(',')
-            datas = [float(num) for num in datas ]
-            coeff_A.append(datas[0:-1])
-            outputs.append(datas[-1])
-        coeff_A = np.array(coeff_A)
+            datas = line.split(',')
+            coeff_[0].append([float(data) for data in datas[0].split(' ')])
+            coeff_[0][-1].append(1)
+            coeff_[1].append([float(data) for data in datas[1].split(' ')])
+            coeff_[2].append([float(data) for data in datas[2].split(' ')])
+            coeff_[2][-1].append(1)
+            # outputs.append([float(data) for data in datas[3:6]])
+            outputs.append(float(datas[3]))
+        coeff_ = [np.array(coeff_i) for coeff_i in coeff_]
         outputs = np.array(outputs)
-    
     test_data_scale = 0.5
-    inputs = np.array(coeff_A)
+    inputs = np.array(coeff_[0])
     outputs = np.array(outputs)
     print("shape:")
     print(outputs.shape)
@@ -251,23 +249,20 @@ if __name__ == "__main__":
     outputs = np.array(outputs[0:int(size*test_data_scale)])
     final_coeff_grad = []   # why list?
     final_coeff_mse = []
-    # coeff_init = [  [-1.25,-25.5,10.5,8,0],
-    #                 [-25.5,10,10.5,8],
-    #                 [-1.25,-25.5,10.5,8,0]]
-    coeff_init = [-1.25,-23.5,10,10.5,11,0,0,0]
-    coeff_init = np.array(coeff_init)
+    coeff_init = [  [-1.25,-25.5,10.5,8,0],
+                    [-25.5,10,10.5,8],
+                    [-1.25,-25.5,10.5,8,0]]
+    coeff_init = [np.array(cof_init) for cof_init in coeff_init]
 
     # x = mat(coeff_[i])
     # print(outputs[:,0].shape)
     print("shape:")
     print(outputs.shape)
     print(inputs.shape)
-    print(inputs[0])
-    print(outputs[0])
-    # y = mat(outputs).reshape(-1,1)
-    # x = mat(inputs)
+    y = mat(outputs).reshape(-1,1)
+    x = mat(inputs)
     # y = mat(outputs[:,i]).reshape(-1,1)
-    # coeff_mse,loss_mse = minMSE(x,y)
+    coeff_mse,loss_mse = minMSE(x,y)
 
     # print("coeff mse is:")
     # print(coeff_mse)
@@ -283,23 +278,19 @@ if __name__ == "__main__":
     y = np.array(outputs).reshape(-1,1)
     x = np.array(inputs)
     # getErrorBar(x,y,coeff_mse)
-    coeff_grad, loss_grad = gradient_decent(x,y,coeff_init,1e-2,200)
-    x_table = range(0,len(loss_grad))
-    plt.plot(x_table,loss_grad)
-    plt.show()
-    # coeff_grad, loss_grad = gradient_decent(x,y,coeff_grad,1e-2,200)
-    # x_table = range(0,len(loss_grad))
-    # plt.plot(x_table,loss_grad)
-    # plt.show()
+    coeff_inits = coeff_init[0]
+    coeff_grad, loss_grad = gradient_decent(x,y,coeff_inits,1e-1,250)
+    coeff_grad, loss_grad = gradient_decent(x,y,coeff_grad,1e-2,500)
+    
     print("coeff grad is:")
     print(coeff_grad)
     print("loss grad is:")
     print(loss_grad[-1])
     print("loss init is:")
-    print(loss(x,y,coeff_init).mean())
-    print(coeff_init,coeff_grad)
+    print(loss(x,y,coeff_inits).mean())
+    print(coeff_inits,coeff_grad)
     getErrorBar(x,y,coeff_grad)
-    getErrorBar(x,y,coeff_init)
+    getErrorBar(x,y,coeff_inits)
 
     print("\n****************train***************\n")
 
@@ -318,14 +309,14 @@ if __name__ == "__main__":
 
     y = np.array(test_set[1]).reshape(-1,1)
     x = np.array(test_set[0]).reshape(y.shape[0],-1)
-    # coeff_grad, loss_grad = gradient_decent(x,y,coeff_init,1e-2,250)
+    # coeff_grad, loss_grad = gradient_decent(x,y,coeff_inits,1e-2,250)
     print("coeff grad is:")
     print(coeff_grad)
     print("loss grad is:")
-    print(loss(x,y,coeff_grad).mean())
+    print(loss_grad[-1])
     print("loss init is:")
-    print(loss(x,y,coeff_init).mean())
-    print(coeff_init,"\n",coeff_grad)
+    print(loss(x,y,coeff_inits).mean())
+    print(coeff_inits,"\n",coeff_grad)
     print("\n***************test****************\n")
     final_coeff_grad.append(coeff_grad)
     

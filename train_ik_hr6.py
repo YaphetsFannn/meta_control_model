@@ -218,7 +218,7 @@ if __name__ == "__main__":
     argparser.add_argument('--batch_size', type=int, help='update steps for finetunning', default=40)
     argparser.add_argument('--is_fk', type=bool, help='if is foward', default=False)
     argparser.add_argument('--generate_data', type=bool, \
-                                help='generate radom datas or using true data', default=False)
+                                help='generate radom datas or using true data', default=True)
     argparser.add_argument('--is_delta_model', type=bool, \
                                 help='if needs to train a delta_p -> delta_q models', default=False)
     

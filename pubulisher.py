@@ -1,3 +1,7 @@
+# -*- coding: utf-8 -*-  
+"""
+    description: JointPub Node
+"""
 import rospy
 from sensor_msgs.msg import JointState
 from std_msgs.msg import Header
@@ -70,7 +74,7 @@ class JointPub():
             ]
         self.pub = []
         rospy.init_node('jointStatePublisher')
-        rate = rospy.Rate(1) # 10hz
+        self.rate = rospy.Rate(100) # 100hz
         for i in range(0,28):
             self.pub.append(rospy.Publisher(self.node_names[i], Float64, queue_size=10))
 
@@ -78,7 +82,10 @@ class JointPub():
     def publish_sigle_joint(self,joint_value,joint_index):
         pub_str = Float64()
         pub_str.data = joint_value
-        self.pub[joint_index].publish(pub_str)
+        for i in range(20):
+            self.pub[joint_index].publish(pub_str)
+            self.rate.sleep()
+
     
     def publish_jointsR(self,joint_values):
         joint_indexs = [1,3,5,21,23,25]

@@ -35,8 +35,6 @@ class testIkM():
 
 if __name__ == "__main__":
     ik_tester = testIkM("./model_trained/net_param.pkl")
-    positions = [[31.9740,-11.3775,10.4982],[33.0454,-16.3411,7.3619]]
-    positions = np.array(positions)
     p_range = []
     q_range = []
     with open("./model_trained/min_max.txt","r") as rf:
@@ -54,11 +52,14 @@ if __name__ == "__main__":
     q_range = np.array(q_range)
     print(p_range)
     print(q_range)
+
+    positions = [[31.9740,-11.3775,10.4982],[33.0454,-16.3411,7.3619]]
+    #                                        32.7593 , 2.5641, -0.6474
+    positions = np.array(positions)
     positions = [position * p_range[1] + p_range[0] for position in positions]
-        
     joints = ik_tester.cal_ik(positions)
     joints = [(joint * q_range[1] + q_range[0])*R2D for joint in joints]
     Pubs = JointPub()
-    Pubs.publish_jointsD(joints[0])
+    Pubs.publish_jointsD(joints[1])
     print("output: ")
     print(joints)
