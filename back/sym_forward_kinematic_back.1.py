@@ -240,10 +240,9 @@ if __name__ == "__main__":
     # joints = [0,0,0,0,0,0,0]
     joints = [joint/180.0 * np.pi for joint in joints]
     Robot_ = get_Robot_()
-    fk_array = Robot_.cal_fk(joints)
+    position = Robot_.cal_fk(joints)
     print("**************************************")
     # print(np.array(fk_array))
-    position = [-fk_array[1][3],-fk_array[2][3],fk_array[0][3]]
     print("position = ")
 
     print(position[0])

@@ -48,10 +48,6 @@ def main(args):
     generate_ = args.g
     is_delta_model = args.is_delta_model
 
-    # q_0 = np.array([1.33,-1.25,0.25,0.29,0.2,0.2,0])
-    # pku_hr6 = get_Robot_()
-    # DH_pku_hr6 = pku_hr6.cal_fk(q_0)
-    # print(DH_pku_hr6)
     if not is_delta_model:
         if generate_:
             inputs, outputs, test_inputs, test_outputs, p_range, q_range = generate_data(1000, is_fk=args.is_fk)
@@ -60,9 +56,7 @@ def main(args):
     else:
         q_0 = np.array([1.33,1.02,0.25,0.29,0.3,0.2])
         pku_hr6 = get_Robot()
-        DH_pku_hr6 = pku_hr6.cal_fk(q_0)
-        # print(DH_pku_hr6)
-        p_0 = np.array(DH_pku_hr6[:,-1][0:3])
+        p_0 = pku_hr6.cal_fk(q_0)
         inputs, outputs, test_set, delta_p_range, delta_q_range = generate_delta_data(q_0, p_0)
         test_inputs = np.array(test_set[0])
         test_outputs = np.array(test_set[1])
@@ -108,7 +102,7 @@ def main(args):
                     rands = np.random.choice(prediction_.data.numpy().shape[0])
                     joint_1 = [delta_q_i * delta_q_range[1] + delta_q_range[0] +\
                                  q_0 for delta_q_i in prediction_.data.numpy()]
-                    p_pre = np.array([pku_hr6.cal_fk(joint_i)[:,-1][0:3] for joint_i in joint_1])
+                    p_pre = np.array([pku_hr6.cal_fk(joint_i) for joint_i in joint_1])
                     p_real = [  p_0 + inputs_[0:3] * delta_p_range[1] + delta_p_range[0] \
                                 for inputs_ in test_x.data.numpy()]
 
@@ -138,9 +132,7 @@ def main(args):
                     print("outputs:")
                     print(prediction_.data.numpy()[-1])
                     joint_1 = [q_i * q_range[1] + q_range[0] for q_i in prediction_.data.numpy()]
-                    p_pre = np.array([pku_hr6.cal_fk(joint_i)[:,-1][0:3] for joint_i in joint_1])
-                    #!!! notice that p_real[x,y,z] = p_fk[-y,-z,x]
-                    p_pre = np.array([ [-position[1],-position[2],position[0]] for position in p_pre])
+                    p_pre = np.array([pku_hr6.cal_fk(joint_i) for joint_i in joint_1])
                     p_real = [inputs_[0:3]*p_range[1] + p_range[0] for inputs_ in test_x.data.numpy()]
                     print(p_real[-1])
                     print(p_pre[-1])

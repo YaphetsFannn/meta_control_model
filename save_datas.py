@@ -165,23 +165,23 @@ def main(args):
             cv2.imshow("res", res)
             # print(depth_point)
 
-            msg = rospy.wait_for_message('/motor_states/pan_tilt_port',MotorStateList,timeout=10)
-            # print(len(msg.motor_states))
-            joints,valid_q = get_joint_angle(msg)
-            if valid_p and valid_q:
-                depth_point = np.array(depth_point)
-                # print(joints)
-                # print(depth_point)
-                if args.only_q:
-                    data = joints
-                else:   
-                    data = np.append(depth_point, joints)
-                print(data)
-                datas.append(data)
-            if args.t: # pubulish joint
-                data = tracking_datas[count]
-                Pubs.publish_jointsD(data)
-                count = count + 1
+            # msg = rospy.wait_for_message('/motor_states/pan_tilt_port',MotorStateList,timeout=10)
+            # # print(len(msg.motor_states))
+            # joints,valid_q = get_joint_angle(msg)
+            # if valid_p and valid_q:
+            #     depth_point = np.array(depth_point)
+            #     # print(joints)
+            #     # print(depth_point)
+            #     if args.only_q:
+            #         data = joints
+            #     else:   
+            #         data = np.append(depth_point, joints)
+            #     print(data)
+            #     datas.append(data)
+            # if args.t: # pubulish joint
+            #     data = tracking_datas[count]
+            #     Pubs.publish_jointsD(data)
+            #     count = count + 1
             if cv2.waitKey(100) & 0xFF == ord('q'):   # quit
                 break
         for data in datas:

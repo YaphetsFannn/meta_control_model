@@ -31,8 +31,7 @@ def main(args):
     pku_hr6 = get_Robot()
     with open(os.path.join("./data",output_f+".txt"),'w') as wf:
         for joint in v_joints:
-            tmp_p = pku_hr6.cal_fk(joint,True)[:,-1][0:3]
-            tmp_p = [-tmp_p[1],-tmp_p[2],tmp_p[0]]
+            tmp_p = pku_hr6.cal_fk(joint,True)
             
             for i in range(3):
                 wf.write(str(round(tmp_p[i],2)))

@@ -156,7 +156,9 @@ class FK():
         T_base[0][3] = T_base[0][3] + self.dz
         T_base[1][3] = T_base[1][3] - self.dx
         T_base[2][3] = T_base[2][3] - self.dy
-        return  T_base
+        #!!! notice that p_real[x,y,z] = p_fk[-y,-z,x]
+        position = [-T_base[1][3],-T_base[2][3],T_base[0][3]]
+        return  position
 
 pi = np.pi
 
@@ -231,7 +233,7 @@ def noramlization(data,has_equle=False):
     """
     minVals = data.min(0)
     maxVals = data.max(0)
-    print("min:", minVals,"max",maxVals)
+    print("nmlzt: min:", minVals,"max",maxVals)
     ranges = maxVals - minVals
     normData = (data - minVals)/ranges
     return normData
@@ -241,7 +243,7 @@ def generate_delta_data(q_0,p_0, data_nums = 500, test_data_scale = 0.8):
     生成围绕p_0，以输入为 delta_p,输出为 delta_q 的数据
     """
     q, p, _, _ ,_,_= generate_data(data_nums, q_0, test_data_scale = 1, is_delta = True,
-        delta_range = np.pi/10)
+        delta_range = np.pi/10,need_norm=False)
     delta_p = np.array([p_i - p_0 for p_i in p])
     delta_q = np.array([q_i - q_0 for q_i in q])
 
@@ -267,9 +269,15 @@ def generate_delta_data(q_0,p_0, data_nums = 500, test_data_scale = 0.8):
 
 def generate_data(data_nums = 1000, q_e =[0,0,0,0,0,0], is_fk = True, 
                 test_data_scale = 0.8, is_delta = False,
-                delta_range = 0):
+                delta_range = np.pi/10, need_d2r = False,need_norm = True):
     # (0,512) (0,512) (-298,302),(0,53),(-438,101),(-358,120)
     # (0,pi),(0,pi)
+    joint_start = q_e
+    if joint_start[0] > np.pi*2 or joint_start[0] < -np.pi*2:
+        need_d2r = True
+    if need_d2r:
+        d2r = np.pi/180
+        joint_start = [q_e_ * d2r for q_e_ in q_e]
     q = []
     p = []
     with open("data.txt","w") as wf:
@@ -279,8 +287,7 @@ def generate_data(data_nums = 1000, q_e =[0,0,0,0,0,0], is_fk = True,
         uniform_ = [(pi/2,pi),(pi/3,pi*3/4),(-pi/2,pi/2),(0,pi/12),(-pi/2,pi/6),(-pi/2,pi/6)]
         for i in range(data_nums):
             if is_delta:
-                joint = q_e + np.random.rand(6) * delta_range
-                # joint[-1] = 0
+                joint = joint_start + (np.random.rand(6) * 2 - 1) * delta_range
             else:
                 joint = []
                 for ranges in uniform_:
@@ -290,10 +297,7 @@ def generate_data(data_nums = 1000, q_e =[0,0,0,0,0,0], is_fk = True,
                 # joint[-1] = 0
             q.append(joint)
             # print("joint is ", joint)
-            DH_robot_ = robot_.cal_fk(joint)
-            # print(DH_robot_)
-            p_tmp = DH_robot_[:,-1][0:3]
-            p_tmp = np.array([ -p_tmp[1],-p_tmp[2],p_tmp[0] ])
+            p_tmp = robot_.cal_fk(joint)
             p.append(p_tmp)
             for j in range(3):
                 wf.write(str(round(p[-1][j],2)))
@@ -313,8 +317,9 @@ def generate_data(data_nums = 1000, q_e =[0,0,0,0,0,0], is_fk = True,
         outputs = q
     p_range = [p.min(0), p.max(0) - p.min(0)]
     q_range = [q.min(0), q.max(0) - q.min(0)]
-    inputs = np.array(noramlization(inputs))
-    outputs = np.array(noramlization(outputs))
+    if need_norm:
+        inputs = np.array(noramlization(inputs))
+        outputs = np.array(noramlization(outputs))
     test_set = [inputs[int(inputs.shape[0]*test_data_scale):-1], 
                 outputs[int(inputs.shape[0]*test_data_scale):-1]]
     inputs = inputs[0:int(q.shape[0]*test_data_scale)]
@@ -327,4 +332,4 @@ if __name__ == "__main__":
     robot = get_Robot()
     pos = robot.cal_fk(joints)
     print("position is:")
-    print(pos[0:3,-1])
+    print(pos)

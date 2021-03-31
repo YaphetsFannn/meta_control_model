@@ -123,9 +123,9 @@ def getErrorBar(x,y,coeff):
     labels = [str(round((i+0.5)*step_y+mi,2)) for i in range(10)]
     bplot = plt.boxplot(errors,showmeans=True,patch_artist=True, labels=labels)  # 设置箱型图可填充
     plt.grid(True)
-    plt.ylim(-5,5)
+    plt.ylim(-10,10)
     plt.ylabel("distance (cm)")
-    plt.xlabel("range of x (cm)")
+    plt.xlabel("range (cm)")
     plt.show()
     # df = pd.DataFrame(data)
     # # df.plot.box(title="Consumer spending in each country", vert=False)
@@ -176,7 +176,8 @@ def gradient_decent(x,y,coeff_init,lr_start,epoch,decay=0):
 if __name__ == "__main__":
 
     argparser = argparse.ArgumentParser()
-    argparser.add_argument('--file', type=str, help='file name(or path)', default="q_p_data")
+    argparser.add_argument('--file', type=str, help='file name(or path)', default="real_data")
+    argparser.add_argument('--n', type=int, help='data_num', default=100)
     argparser.add_argument('--r', type=bool, help='real raw data from file', default=True)
     argparser.add_argument('--e', type=int, help='epoch', default=400)
     argparser.add_argument('--lr', type=float, help='learning rate', default=1e-1)
@@ -193,11 +194,14 @@ if __name__ == "__main__":
         files = os.path.join("./data",file_names+'.txt')
         inputs_,outputs_,test_inputs,test_outputs = load_data(files)
         outputs_xyz = []
+        counts_data = 0        
         for joints,positions in zip(inputs_,outputs_):
-            fk_array = Robot_.cal_fk(joints,True)
+            if counts_data > args.n:
+                    break
+            counts_data = counts_data + 1
             # a1 a7 d1 d3 d5
-            # !!!!!!!!!!!here!!!!!!!!!  posintion[x,y,z](real) = [-y,-z,x](in fk models)
-            position = [-fk_array[1][3],-fk_array[2][3],fk_array[0][3]]        
+            position = Robot_.cal_fk(joints,True)
+            
             for i in range(3):
                 tmp_coeff = []
                 a1_ = position[i].evalf(subs={a1:1,a7:0,d1:0,d3:0,d5:0})
@@ -252,7 +256,7 @@ if __name__ == "__main__":
     # coeff_init = [  [-1.25,-25.5,10.5,8,0],
     #                 [-25.5,10,10.5,8],
     #                 [-1.25,-25.5,10.5,8,0]]
-    coeff_init = [-1.25,-21.5,10,10.5,11,0,0,0]
+    coeff_init = [-1.25,-25.5,10,10.5,11,0,0,0]
     coeff_init = np.array(coeff_init)
 
     # x = mat(coeff_[i])

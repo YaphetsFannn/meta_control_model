@@ -68,9 +68,7 @@ if __name__ == "__main__":
     print("outputs:",joints)
     joints = [(joint * q_range[1] + q_range[0]) for joint in joints]
     print("joints:",joints)
-    pos = [pku_hr6.cal_fk(joint_i)[:,-1][0:3] for joint_i in joints]
-    #!!! notice that p_real[x,y,z] = p_fk[-y,-z,x]
-    pos_pre = np.array([ [-p[1],-p[2],p[0]] for p in pos])
+    pos_pre = np.array([pku_hr6.cal_fk(joint_i) for joint_i in joints])    
     print("fk reasult:")
     print(pos_pre)
     pos_real = []
@@ -79,7 +77,7 @@ if __name__ == "__main__":
         Pubs.publish_jointsR(joint)
         rospy.sleep(3)
         msg = rospy.wait_for_message('/hand_position',position,timeout=100)
-        pos_real.append([msg.A,msg.B,msg.C])
+        pos_real.append([msg.hx,msg.hy,msg.hz])
     pos_real = np.array(pos_real)
     print("real pos:")
     print(pos_real)
