@@ -14,26 +14,27 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 from fk_models import *
 class DIM():
-    def __init__(self,config=None,p_start=[],q_start=[],p_tgt=[],batch_size = 50, epoch = 20, data_nums = 1000):
+    def __init__(self,config=None,p_start=[],q_start=[],p_tgt=[],batch_size = 20,\
+                 epoch = 10, data_nums = 500,model_path = "./model_trained/delta_net_param.pkl"):
         if config==None:
-            self.config = [
+           self.config = [
                 ('linear', [3, 32]),
                 ('relu', [True]),
-                # ('bn', [32]),
+                # ('bn', [128]),
 
                 ('linear', [32, 64]),
                 ('relu', [True]),
-                # ('bn', [64]),
+                # ('bn', [128]),
 
                 ('linear', [64, 128]),
                 ('relu', [True]),
                 # ('bn', [128]),
 
-                ('linear', [128, 32]),
+                ('linear', [128, 64]),
                 ('relu', [True]),
-                # ('bn', [32]),
+                # ('bn', [128]),
 
-                ('linear', [32, 6]),
+                ('linear', [64, 6]),
                 # ('sigmoid', [True])
             ]
         else:
@@ -41,6 +42,7 @@ class DIM():
         print("config")
         print(self.config)
         self.DeltaModel = ann_model(self.config)
+        self.DeltaModel.load_state_dict(torch.load(model_path))
         self.q_s = q_start
         d2r = np.pi/180
         need_d2r = False
@@ -63,7 +65,7 @@ class DIM():
     def generate_data(self):
         self.hr6 = get_Robot()
         self.p_s_cal = self.hr6.cal_fk(self.q_s)
-        self.inputs, self.outputs, test_set, self.delta_p_range, self.delta_q_range = generate_delta_data(self.q_s, self.p_s_cal,self.data_nums)
+        self.inputs, self.outputs, test_set, self.delta_p_range, self.delta_q_range = generate_delta_data(self.q_s, self.p_s_cal,self.data_nums,0.1)
         self.test_set = [np.array(test_set[0]).astype(float), np.array(test_set[1]).astype(float)]
         self.inputs = self.inputs.astype(float)
         self.outputs = self.outputs.astype(float)
@@ -83,12 +85,13 @@ class DIM():
         delta_q_range = self.delta_q_range
         delta_p_range = self.delta_p_range
         for i in range(self.epoch):
-            if i % 5==0:
+            if i % 1==0:
                 with torch.no_grad():
                     self.losses.append(np.mean(batch_loss))
                     prediction_ = self.DeltaModel(test_x)
                     test_loss = self.cost(prediction_, test_y)
                     losses_test.append(test_loss.data.numpy())
+                    print("************************",i,"***********************")
                     print(i, " training loss ", np.mean(batch_loss), " test loss ", test_loss.data.numpy())
 
                     joint_1 = [delta_q_i * delta_q_range[1] + delta_q_range[0] +\
@@ -146,8 +149,9 @@ class DIM():
                         color='b',
                         alpha=0.2)
         plt.show()
-    def save_model(self,path = "./model_trained/delta_net.pkl"):
-        torch.save(self.DeltaModel, path)
+    def save_model(self,path = "./model_trained/delta_net_param.pkl"):
+        # torch.save(self.DeltaModel, path)
+        torch.save(self.DeltaModel.state_dict(), path)
 
 def str2f(s):
     data = s.split(" ")
@@ -155,10 +159,12 @@ def str2f(s):
     return data
 
 def main(args):
-    deltaModel = DIM(q_start=[107.23,24.61,13.48,-3.81,-2.93,-48.93])
+    deltaModel = DIM(q_start=str2f("115 -12 60 -14.06 -44 -19"))
+    # deltaModel = DIM(q_start=str2f("108.69 -9.38 51.56 -14.06 -38.09 -16.99"))
     deltaModel.generate_data()
     deltaModel.train_DIM()
     deltaModel.plot_Img()
+    # deltaModel.save_model()
 
 
 if __name__ == "__main__":

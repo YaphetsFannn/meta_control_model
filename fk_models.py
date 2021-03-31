@@ -238,7 +238,7 @@ def noramlization(data,has_equle=False):
     normData = (data - minVals)/ranges
     return normData
 
-def generate_delta_data(q_0,p_0, data_nums = 500, test_data_scale = 0.8, delta_range_ = np.pi/20):
+def generate_delta_data(q_0,p_0, data_nums = 500, test_data_scale = 0.6, delta_range_ = np.pi/20):
     """
     生成围绕p_0，以输入为 delta_p,输出为 delta_q 的数据
     """
