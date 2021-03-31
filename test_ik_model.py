@@ -17,6 +17,9 @@ import matplotlib.pyplot as plt
 from train_ik_hr6 import *
 #define JOINT_NUM 28
 from pubulisher import JointPub
+import rospy
+from std_msgs.msg import Header
+from realsense_camera.msg import position
 
 R2D = 180/np.pi
 class testIkM():
@@ -53,13 +56,41 @@ if __name__ == "__main__":
     print(p_range)
     print(q_range)
 
-    positions = [[31.9740,-11.3775,10.4982],[33.0454,-16.3411,7.3619]]
+    pku_hr6 = get_Robot()
+    position_tgt = [[28.4599,-2.9071,16.9371],[28.5224,-3.5886,18.9614]]
     #                                        32.7593 , 2.5641, -0.6474
-    positions = np.array(positions)
-    positions = [position * p_range[1] + p_range[0] for position in positions]
-    joints = ik_tester.cal_ik(positions)
-    joints = [(joint * q_range[1] + q_range[0])*R2D for joint in joints]
-    Pubs = JointPub()
-    Pubs.publish_jointsD(joints[1])
-    print("output: ")
-    print(joints)
+    print("input:")
+    print(position_tgt)
+    position_tgt = np.array(position_tgt)
+    inputs = [(p - p_range[0])/p_range[1] for p in position_tgt]
+    print(inputs)
+    joints = ik_tester.cal_ik(inputs)
+    print("outputs:",joints)
+    joints = [(joint * q_range[1] + q_range[0]) for joint in joints]
+    print("joints:",joints)
+    pos = [pku_hr6.cal_fk(joint_i)[:,-1][0:3] for joint_i in joints]
+    #!!! notice that p_real[x,y,z] = p_fk[-y,-z,x]
+    pos_pre = np.array([ [-p[1],-p[2],p[0]] for p in pos])
+    print("fk reasult:")
+    print(pos_pre)
+    pos_real = []
+    for joint in joints:
+        Pubs = JointPub()
+        Pubs.publish_jointsR(joint)
+        rospy.sleep(3)
+        msg = rospy.wait_for_message('/hand_position',position,timeout=100)
+        pos_real.append([msg.A,msg.B,msg.C])
+    pos_real = np.array(pos_real)
+    print("real pos:")
+    print(pos_real)
+    dis,mean = distance(pos_pre,pos_real)
+
+    print("distance btw fk and real:")
+    print(dis)
+    print(mean)
+    print("distance btw ik and real:")
+    dis,mean = distance(pos_real,position_tgt)    
+    print(dis)
+    print(mean)
+
+    # print(msg.A,msg.B,msg.C)

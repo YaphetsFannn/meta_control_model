@@ -82,10 +82,19 @@ class JointPub():
     def publish_sigle_joint(self,joint_value,joint_index):
         pub_str = Float64()
         pub_str.data = joint_value
+        print("pub angle ",joint_value," to ",joint_index)
+        
         for i in range(20):
             self.pub[joint_index].publish(pub_str)
             self.rate.sleep()
 
+    def publish_sigle_jointD(self,joint_value,joint_index):
+        D2R = np.pi/180
+        pub_str = Float64()
+        pub_str.data = joint_value*D2R
+        for i in range(20):
+            self.pub[joint_index].publish(pub_str)
+            self.rate.sleep()
     
     def publish_jointsR(self,joint_values):
         joint_indexs = [1,3,5,21,23,25]

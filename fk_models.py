@@ -57,6 +57,9 @@ class FK():
         self.theta = DH_[3][:]
         self.A_init = DH_[1][:]
         self.D_init = DH_[2][:]
+        self.dx = 0
+        self.dy = 0
+        self.dz = 0
         # print("self.d is ", self.D)
         
     def rotate(self, axis, deg):
@@ -107,9 +110,14 @@ class FK():
         ans = np.array(ans)
         return ans
 
-    def cal_fk(self, joints):
+    def cal_fk(self, joints,need_d2r = False):
         # thea_1, thea_2, thea_3, thea_4, thea_5, thea_6 = joints
         # DH_pramater: [link, a, d, thea]，注意这里的单位是m
+        if joints[0] > np.pi*2 or joints[0] < -np.pi*2:
+            need_d2r = True
+        if need_d2r:
+            d2r = np.pi/180
+            joints = [joint_ * d2r for joint_ in joints]
         need_debug = False
         DH = self.get_DH(joints)
         if need_debug:
@@ -145,6 +153,9 @@ class FK():
                 print(position[1])
                 print(position[2])
                 print("\n")
+        T_base[0][3] = T_base[0][3] + self.dz
+        T_base[1][3] = T_base[1][3] - self.dx
+        T_base[2][3] = T_base[2][3] - self.dy
         return  T_base
 
 pi = np.pi
@@ -163,7 +174,11 @@ def get_Robot():
             [links_len[2],     0,      links_len[3],      0,      links_len[4],      0,           0],      # d
             [0,     np.pi/2,        0,      0,         0,  -pi/2,           0],      # theta
         ]
-    Robot_ = FK(DH_)
+        Robot_ = FK(DH_)  
+        if len(links_len) == 8:
+            Robot_.dx = links_len[5]
+            Robot_.dy = links_len[6]
+            Robot_.dz = links_len[7]
     return Robot_
 
 def load_data(file, is_fk = True, test_data_scale = 0.8):
@@ -173,12 +188,10 @@ def load_data(file, is_fk = True, test_data_scale = 0.8):
         p = []
         q = []
         for line in lines:
-            datas = line.split(" ")
-            p_tmp = [float(x) for x in datas[0:3]]
-            # !!!!!!!!!!!here!!!!!!!!!  posintion[x,y,z](real) = [-y,-z,x](in fk models)            
-            position = [p_tmp[2],-p_tmp[0],-p_tmp[1]]
-            p.append(position)
-            q.append([float(x)/180 * np.pi for x in datas[3:-1]])
+            datas = line.strip().split(" ")
+            p_tmp = np.array([float(x) for x in datas[0:3]])            
+            p.append(p_tmp)
+            q.append([float(x)/180 * np.pi for x in datas[3:]])
         q = np.array(q)
         p = np.array(p)
     inputs = p
@@ -193,10 +206,20 @@ def load_data(file, is_fk = True, test_data_scale = 0.8):
     outputs = outputs[0:int(p.shape[0]*test_data_scale)]
     return inputs, outputs, test_set[0], test_set[1],p_range,q_range
 
+def cal_dis(p_a, p_b):
+    ret = 0
+    for p_a_, p_b_ in zip(p_a,p_b):
+        tmp = np.square(p_a_ - p_b_)
+        ret = ret + tmp
+    # print(ret)
+    ret = math.sqrt(ret)
+    return ret
 
 def distance(positions_a, positions_b):
-    # assert positions_a.shape == positions_b.shape
-    dis = [np.sqrt(np.sum(np.square(p_a - p_b))) for p_a, p_b in zip(positions_a, positions_b)]
+    assert positions_a.shape == positions_b.shape
+    # print(positions_a)
+    # print(positions_b)
+    dis = [cal_dis(p_a, p_b) for p_a, p_b in zip(positions_a, positions_b)]
     dis = np.array(dis)
     mean = np.mean(dis)
     return dis,mean
@@ -269,14 +292,16 @@ def generate_data(data_nums = 1000, q_e =[0,0,0,0,0,0], is_fk = True,
             # print("joint is ", joint)
             DH_robot_ = robot_.cal_fk(joint)
             # print(DH_robot_)
-            p.append(DH_robot_[:,-1][0:3])
-
-            for joint_ in joint:
-                wf.write(str(round(joint_,2))+",")
+            p_tmp = DH_robot_[:,-1][0:3]
+            p_tmp = np.array([ -p_tmp[1],-p_tmp[2],p_tmp[0] ])
+            p.append(p_tmp)
             for j in range(3):
                 wf.write(str(round(p[-1][j],2)))
-                if j!=2:
-                    wf.write(",")
+                wf.write(" ")
+            for j in range(6):
+                wf.write(str(round(joint[j],2)))
+                if(j!=5):
+                    wf.write(" ")
             wf.write('\n')
         p = np.array(p)
         q = np.array(q)

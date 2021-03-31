@@ -1,0 +1,8 @@
+cd yyf_ws/src/meta_contorl_model
+
+roslaunch my_dynamixel_tutorial controller_manager.launch
+
+roslaunch my_dynamixel_tutorial start_tilt_controller.launch
+
+./fk.sh
+python train_ik_hr6.py

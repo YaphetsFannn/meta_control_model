@@ -10,7 +10,9 @@ import numpy as np
 import math
 from functools import reduce
 np.set_printoptions(precision=4, suppress=True)
-
+import  argparse
+import os
+import sys
 import copy
 import matplotlib.pyplot as plt
 import numpy as np
@@ -71,10 +73,9 @@ def load_data(file, is_fk = True, test_data_scale = 1):
         p = []
         q = []
         for line in lines:
-            datas = line.split(" ")
+            datas = line.strip().split(" ")
             p.append([float(x) for x in datas[0:3]])
-            q.append([float(x)/180 * np.pi for x in datas[3:-1]])
-            q[-1].append(0)
+            q.append([float(x) for x in datas[3:]])
         q = np.array(q)
         p = np.array(p)
     inputs = q
@@ -173,29 +174,27 @@ def gradient_decent(x,y,coeff_init,lr_start,epoch,decay=0):
     return coeff,losses
 
 if __name__ == "__main__":
-    # joints = [sym.symbols('q_1'),
-    #          sym.symbols('q_2'),
-    #          sym.symbols('q_3'),
-    #          sym.symbols('q_4'),
-    #          sym.symbols('q_5'),
-    #          sym.symbols('q_6'),
-    #          sym.symbols('q_7')]
 
-    # 32.7929 -0.4943 -3.7116 19.63 -9.96 72.95 83.79 -8.50 -8.51
+    argparser = argparse.ArgumentParser()
+    argparser.add_argument('--file', type=str, help='file name(or path)', default="q_p_data")
+    argparser.add_argument('--r', type=bool, help='real raw data from file', default=True)
+    argparser.add_argument('--e', type=int, help='epoch', default=400)
+    argparser.add_argument('--lr', type=float, help='learning rate', default=1e-1)
+    args = argparser.parse_args()
+    file_names = args.file
 
-    
     Robot_ = get_Robot_()
     # print("outputs shape is ",outputs.shape)
-    load_raw_data = True
+    load_raw_data = args.r
     coeff_A = []
     outputs = []
     if load_raw_data:
         coeff_out = []
-        files = "./data/frame_data_0301.txt"
+        files = os.path.join("./data",file_names+'.txt')
         inputs_,outputs_,test_inputs,test_outputs = load_data(files)
         outputs_xyz = []
         for joints,positions in zip(inputs_,outputs_):
-            fk_array = Robot_.cal_fk(joints)
+            fk_array = Robot_.cal_fk(joints,True)
             # a1 a7 d1 d3 d5
             # !!!!!!!!!!!here!!!!!!!!!  posintion[x,y,z](real) = [-y,-z,x](in fk models)
             position = [-fk_array[1][3],-fk_array[2][3],fk_array[0][3]]        
@@ -209,16 +208,15 @@ if __name__ == "__main__":
                 # print(a1_,a7_,d1_,d3_,d5_)
                 if i ==0 :
                     tmp_coeff = [a1_,a7_,0,d3_,d5_,1,0,0]
-                    coeff_out.append(tmp_coeff)
-                    outputs_xyz.append(positions[i])
                 elif i== 1:
                     tmp_coeff = [0,a7_,d1_,d3_,d5_,0,1,0]
                 else:
                     tmp_coeff = [a1_,a7_,0,d3_,d5_,0,0,1]
+                coeff_out.append(tmp_coeff)
+                outputs_xyz.append(positions[i])
 
-                    
         coeff_out = np.array(coeff_out)
-        outputs_file =  "./data/coeff_sub_03_16.txt"
+        outputs_file =  os.path.join("./data",file_names+'_coeff.txt')
         with open(outputs_file,"w") as wf:
             for coeffs,Y in zip(coeff_out,outputs_xyz):
                 for coeff in coeffs:
@@ -227,7 +225,7 @@ if __name__ == "__main__":
                 wf.write(str(Y)+'\n')
 
 
-    files = "./data/coeff_sub_03_16.txt"
+    files = os.path.join("./data",file_names+'_coeff.txt')
     with open(files) as rf:
         lines = rf.readlines()
         shuffle(lines)
@@ -254,7 +252,7 @@ if __name__ == "__main__":
     # coeff_init = [  [-1.25,-25.5,10.5,8,0],
     #                 [-25.5,10,10.5,8],
     #                 [-1.25,-25.5,10.5,8,0]]
-    coeff_init = [-1.25,-23.5,10,10.5,11,0,0,0]
+    coeff_init = [-1.25,-21.5,10,10.5,11,0,0,0]
     coeff_init = np.array(coeff_init)
 
     # x = mat(coeff_[i])
@@ -262,8 +260,8 @@ if __name__ == "__main__":
     print("shape:")
     print(outputs.shape)
     print(inputs.shape)
-    print(inputs[0])
-    print(outputs[0])
+    # print(inputs[0])
+    # print(outputs[0])
     # y = mat(outputs).reshape(-1,1)
     # x = mat(inputs)
     # y = mat(outputs[:,i]).reshape(-1,1)
@@ -283,7 +281,7 @@ if __name__ == "__main__":
     y = np.array(outputs).reshape(-1,1)
     x = np.array(inputs)
     # getErrorBar(x,y,coeff_mse)
-    coeff_grad, loss_grad = gradient_decent(x,y,coeff_init,1e-2,200)
+    coeff_grad, loss_grad = gradient_decent(x,y,coeff_init,args.lr,args.e,0.5/args.e)
     x_table = range(0,len(loss_grad))
     plt.plot(x_table,loss_grad)
     plt.show()
