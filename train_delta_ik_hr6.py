@@ -14,178 +14,151 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 from fk_models import *
 class DIM():
-    def __init__(self,config=None,p_start=[],q_start=[],p_tgt=[]):
-        if not config:
+    def __init__(self,config=None,p_start=[],q_start=[],p_tgt=[],batch_size = 50, epoch = 20, data_nums = 1000):
+        if config==None:
             self.config = [
-                ('linear', [input_size, 128]),
+                ('linear', [3, 32]),
+                ('relu', [True]),
+                # ('bn', [32]),
+
+                ('linear', [32, 64]),
+                ('relu', [True]),
+                # ('bn', [64]),
+
+                ('linear', [64, 128]),
                 ('relu', [True]),
                 # ('bn', [128]),
 
-                ('linear', [128, 128]),
+                ('linear', [128, 32]),
                 ('relu', [True]),
-                # ('bn', [128]),
+                # ('bn', [32]),
 
-                ('linear', [128, 128]),
-                ('relu', [True]),
-                # ('bn', [128]),
-
-                ('linear', [128, 128]),
-                ('relu', [True]),
-                # ('bn', [128]),
-
-                ('linear', [128, output_size]),
+                ('linear', [32, 6]),
                 # ('sigmoid', [True])
             ]
         else:
             self.config = config
-        self.DeltaModel = ann_model(config)
+        print("config")
+        print(self.config)
+        self.DeltaModel = ann_model(self.config)
         self.q_s = q_start
+        d2r = np.pi/180
+        need_d2r = False
+        for q in self.q_s:
+            if q > 2*np.pi or q < -2*np.pi:
+                need_d2r = True
+        if need_d2r:
+            self.q_s = np.array([q_i * d2r for q_i in self.q_s])
         self.p_s = p_start
         self.p_t = p_tgt
+        self.cost = torch.nn.MSELoss(reduction='mean')
+        #参数
+        self.optimizer_ik = torch.optim.Adam(self.DeltaModel.parameters(), lr = 0.001)
+        # 训练网络
+        self.losses = []
+        self.batch_size = batch_size
+        self.epoch = epoch
+        self.data_nums = data_nums
 
+    def generate_data(self):
+        self.hr6 = get_Robot()
+        self.p_s_cal = self.hr6.cal_fk(self.q_s)
+        self.inputs, self.outputs, test_set, self.delta_p_range, self.delta_q_range = generate_delta_data(self.q_s, self.p_s_cal,self.data_nums)
+        self.test_set = [np.array(test_set[0]).astype(float), np.array(test_set[1]).astype(float)]
+        self.inputs = self.inputs.astype(float)
+        self.outputs = self.outputs.astype(float)
     
-def main(args):
-    torch.manual_seed(222)
-    torch.cuda.manual_seed_all(222)
-    np.random.seed(222)
-    print(args)
-        #整体模型架构
-    config = [
-        ('linear', [3, 128]),
-        ('relu', [True]),
-        # ('bn', [128]),
-
-        ('linear', [128, 128]),
-        ('relu', [True]),
-        # ('bn', [128]),
-
-        ('linear', [128, 128]),
-        ('relu', [True]),
-        # ('bn', [128]),
-
-        ('linear', [128, 128]),
-        ('relu', [True]),
-        # ('bn', [128]),
-
-        ('linear', [128, 6]),
-        # ('sigmoid', [True])
-    ]
-    generate_ = args.generate_data
-
-    q_0 = np.array([97.27,30.76,13.48,-4.10,-3.22,-67.97 ])
-    d2r = np.pi/180
-    q_0 = np.array([q_i * d2r for q_i in q_0])
-    dobot = get_Robot()
-    p_0 = dobot.cal_fk(q_0)
-    print("p_0 = ")
-    print(p_0)
-    inputs, outputs, test_set, delta_p_range, delta_q_range = generate_delta_data(q_0, p_0,500)
-    test_inputs = np.array(test_set[0])
-    test_outputs = np.array(test_set[1])
-
-    test_set = [test_inputs.astype(float), test_outputs.astype(float)]
-    inputs = inputs.astype(float)
-    outputs = outputs.astype(float)
-    print(test_set[0][0],test_set[1].shape)
-    print("inputs.shape, outputs.shape ", inputs.shape, outputs.shape)
-    print("inputs[0]: ", inputs[0])
-    print("outputs[0]: ", outputs[0])
-    print("delta_p_range:", delta_p_range)
-
-    #整体模型架构
-    
-
-    fk_nn = ann_model(config)
-
-    #损失函数
-    cost = torch.nn.MSELoss(reduction='mean')
-    #参数
-    optimizer_ik = torch.optim.Adam(fk_nn.parameters(), lr = 0.001)
-    # 训练网络
-    losses = []
-    batch_size = args.batch_size
-    if args.generate_data:
-        dobot = get_Robot()
-    losses_train = []
-    losses_test = []
-    batch_loss = []
-    for i in range(args.epoch):
-        if i % 5==0:
-            with torch.no_grad():
-                losses.append(np.mean(batch_loss))
-                test_x = torch.tensor(test_set[0], dtype = torch.float, requires_grad = False)
-                test_y = torch.tensor(test_set[1], dtype = torch.float, requires_grad = False)
-                prediction_ = fk_nn(test_x)
-                test_loss = cost(prediction_, test_y)
-                losses_test.append(test_loss.data.numpy())
-                print(i, " training loss ", np.mean(batch_loss), " test loss ", test_loss.data.numpy())
-
-                rands = np.random.choice(prediction_.data.numpy().shape[0])
-                joint_1 = [delta_q_i * delta_q_range[1] + delta_q_range[0] +\
-                                q_0 for delta_q_i in prediction_.data.numpy()]
-                print("joint[i]:")
-                print(joint_1[-1])
-                p_pre = np.array([dobot.cal_fk(joint_i) for joint_i in joint_1])
-                print("p_pre")
-                print(p_pre[-1])
-                p_real = [  p_0 + inputs_[0:3] * delta_p_range[1] + delta_p_range[0] \
-                            for inputs_ in test_x.data.numpy()]
-                print("p_real")
-                print(p_real[-1])
-                print(p_0)
-
-                dist_0 = []
-                dist_1 = []
-                for i in range(0,p_pre.shape[0]):
-                    tmp = np.array(p_pre[i] - p_real[i], dtype=np.float64)
-                    tmp2 = np.array(p_0 - p_real[i], dtype=np.float64)
-                    dist_0.append(np.linalg.norm(tmp))
-                    dist_1.append(np.linalg.norm(tmp2))
-                    # print(dist_1[-1])
-                joint_1 = [delta_q_i * delta_q_range[1] + delta_q_range[0] +\
-                                q_0 for delta_q_i in prediction_.data.numpy()]
-                losses_train.append(dist_0)
-                dist_0 = np.mean(np.array(dist_0))
-                dist_1 = np.mean(np.array(dist_1))
-                print(" mean distance ", dist_0, " distance_2 ", dist_1)
-                    
+    def train_DIM(self):
+        torch.manual_seed(222)
+        torch.cuda.manual_seed_all(222)
+        np.random.seed(222)
+        dis_val = []
+        losses_test = []
         batch_loss = []
-        # MINI-Batch方法来进行训练
-        for start in range(0, len(inputs), batch_size):
-            end = start + batch_size if start + batch_size < len(inputs) else len(inputs)
-            xx = torch.tensor(inputs[start:end], dtype = torch.float, requires_grad = True)
-            yy = torch.tensor(outputs[start:end], dtype = torch.float, requires_grad = True)
-            prediction = fk_nn(xx)
-            loss = cost(prediction, yy)
-            batch_loss.append(loss.data.numpy())
-            
-            optimizer_ik.zero_grad()
-            loss.backward(retain_graph=True)
-            optimizer_ik.step()
-        # losses_train.append(batch_loss)
-    loss_min = []
-    loss_max = []
-    loss_mean = []
-    for i in range(len(losses_train)):
-        loss_i = np.array(losses_train[i])
-        loss_min.append(loss_i.min())
-        loss_max.append(loss_i.max())
-        loss_mean.append(loss_i.mean())
- 
-    # plt.legend(loc='lower right', frameon=False) # 图例在图形里面
-    # plt.legend(loc=8, frameon=False, bbox_to_anchor=(0.5,-0.3))# 图例在图形外面
-    
-    plt.plot(range(len(losses_train)),loss_mean) 
-    plt.xlabel('epoch')
-    # plt.ylabel('mse loss')
-    plt.ylabel('distance between p\' and p (cm)')
-    plt.fill_between(range(len(losses_train)),
-                    loss_min,
-                    loss_max,
-                    color='b',
-                    alpha=0.2)
-    plt.show()
-    torch.save(fk_nn, "./model_trained/delta_net.pkl")
+        test_x = torch.tensor(self.test_set[0], dtype = torch.float, requires_grad = False)
+        test_y = torch.tensor(self.test_set[1], dtype = torch.float, requires_grad = False)
+        self.dis_min = []
+        self.dis_max = []
+        self.dis_mean = []
+        delta_q_range = self.delta_q_range
+        delta_p_range = self.delta_p_range
+        for i in range(self.epoch):
+            if i % 5==0:
+                with torch.no_grad():
+                    self.losses.append(np.mean(batch_loss))
+                    prediction_ = self.DeltaModel(test_x)
+                    test_loss = self.cost(prediction_, test_y)
+                    losses_test.append(test_loss.data.numpy())
+                    print(i, " training loss ", np.mean(batch_loss), " test loss ", test_loss.data.numpy())
+
+                    joint_1 = [delta_q_i * delta_q_range[1] + delta_q_range[0] +\
+                                    self.q_s for delta_q_i in prediction_.data.numpy()]
+                    print("joint[i]:")
+                    print(joint_1[-1])
+                    p_pre = np.array([self.hr6.cal_fk(joint_i) for joint_i in joint_1])
+                    print("p_pre")
+                    print(p_pre[-1])
+                    p_real = [  self.p_s_cal + inputs_[0:3] * delta_p_range[1] + delta_p_range[0] \
+                                for inputs_ in test_x.data.numpy()]
+                    print("p_real")
+                    print(p_real[-1])
+                    print(self.p_s_cal)
+
+                    dist_0 = []
+                    dist_1 = []
+                    for i in range(0,p_pre.shape[0]):
+                        tmp = np.array(p_pre[i] - p_real[i], dtype=np.float64)
+                        tmp2 = np.array(self.p_s_cal - p_real[i], dtype=np.float64)
+                        dist_0.append(np.linalg.norm(tmp))
+                        dist_1.append(np.linalg.norm(tmp2))
+                    dist_0 = np.array(dist_0)
+                    self.dis_min.append(dist_0.min())
+                    self.dis_max.append(dist_0.max())
+                    self.dis_mean.append(dist_0.mean())
+                    dist_0 = np.mean(np.array(dist_0))
+                    dist_1 = np.mean(np.array(dist_1))
+                    print(" mean distance ", dist_0, " distance_2 ", dist_1)
+                        
+            batch_loss = []
+            # MINI-Batch方法来进行训练
+            for start in range(0, len(self.inputs), self.batch_size):
+                end = start + self.batch_size if start + self.batch_size < len(self.inputs) else len(self.inputs)
+                xx = torch.tensor(self.inputs[start:end], dtype = torch.float, requires_grad = True)
+                yy = torch.tensor(self.outputs[start:end], dtype = torch.float, requires_grad = True)
+                prediction = self.DeltaModel(xx)
+                loss = self.cost(prediction, yy)
+                batch_loss.append(loss.data.numpy())
+                self.optimizer_ik.zero_grad()
+                loss.backward(retain_graph=True)
+                self.optimizer_ik.step()
+
+    def plot_Img(self):
+        # plt.legend(loc='lower right', frameon=False) # 图例在图形里面
+        # plt.legend(loc=8, frameon=False, bbox_to_anchor=(0.5,-0.3))# 图例在图形外面
+        
+        plt.plot(range(len(self.dis_mean)),self.dis_mean) 
+        plt.xlabel('epoch')
+        # plt.ylabel('mse loss')
+        plt.ylabel('distance between p\' and p (cm)')
+        plt.fill_between(range(len(self.dis_mean)),
+                        self.dis_min,
+                        self.dis_max,
+                        color='b',
+                        alpha=0.2)
+        plt.show()
+    def save_model(self,path = "./model_trained/delta_net.pkl"):
+        torch.save(self.DeltaModel, path)
+
+def str2f(s):
+    data = s.split(" ")
+    data = [float(d) for d in data]
+    return data
+
+def main(args):
+    deltaModel = DIM(q_start=[107.23,24.61,13.48,-3.81,-2.93,-48.93])
+    deltaModel.generate_data()
+    deltaModel.train_DIM()
+    deltaModel.plot_Img()
 
 
 if __name__ == "__main__":

@@ -238,12 +238,12 @@ def noramlization(data,has_equle=False):
     normData = (data - minVals)/ranges
     return normData
 
-def generate_delta_data(q_0,p_0, data_nums = 500, test_data_scale = 0.8):
+def generate_delta_data(q_0,p_0, data_nums = 500, test_data_scale = 0.8, delta_range_ = np.pi/20):
     """
     生成围绕p_0，以输入为 delta_p,输出为 delta_q 的数据
     """
     q, p, _, _ ,_,_= generate_data(data_nums, q_0, test_data_scale = 1, is_delta = True,
-        delta_range = np.pi/10,need_norm=False)
+        delta_range = delta_range_,need_norm=False)
     delta_p = np.array([p_i - p_0 for p_i in p])
     delta_q = np.array([q_i - q_0 for q_i in q])
 
@@ -269,7 +269,7 @@ def generate_delta_data(q_0,p_0, data_nums = 500, test_data_scale = 0.8):
 
 def generate_data(data_nums = 1000, q_e =[0,0,0,0,0,0], is_fk = True, 
                 test_data_scale = 0.8, is_delta = False,
-                delta_range = np.pi/10, need_d2r = False,need_norm = True):
+                delta_range = np.pi/10, need_d2r = False,need_norm = True,write_to_file = False):
     # (0,512) (0,512) (-298,302),(0,53),(-438,101),(-358,120)
     # (0,pi),(0,pi)
     joint_start = q_e
@@ -299,14 +299,15 @@ def generate_data(data_nums = 1000, q_e =[0,0,0,0,0,0], is_fk = True,
             # print("joint is ", joint)
             p_tmp = robot_.cal_fk(joint)
             p.append(p_tmp)
-            for j in range(3):
-                wf.write(str(round(p[-1][j],2)))
-                wf.write(" ")
-            for j in range(6):
-                wf.write(str(round(joint[j],2)))
-                if(j!=5):
+            if write_to_file:
+                for j in range(3):
+                    wf.write(str(round(p[-1][j],2)))
                     wf.write(" ")
-            wf.write('\n')
+                for j in range(6):
+                    wf.write(str(round(joint[j],2)))
+                    if(j!=5):
+                        wf.write(" ")
+                wf.write('\n')
         p = np.array(p)
         q = np.array(q)
     if is_fk:
