@@ -238,6 +238,26 @@ def noramlization(data,has_equle=False):
     normData = (data - minVals)/ranges
     return normData
 
+def noramlization_with_delta_range(data,delta_range):
+    """
+        normData = (data - min)/(max - min)
+    """
+    minVals = delta_range[0]
+    rangeVals = delta_range[1]
+    print("nmlzt_with_delta: min:", minVals,"max",minVals+rangeVals)
+    normData = (data - minVals)/rangeVals
+    return normData
+
+def read_range_from_file(file):
+    with open(file,"r") as rf:
+        lines = rf.readlines()
+        delta_p_range = lines[0].strip().split(" ")
+        delta_p_range = [float(p) for p in delta_p_range]
+        delta_p_range = np.array([delta_p_range[0:3],delta_p_range[3:]])
+        delta_q_range = lines[1].strip().split(" ")
+        delta_q_range = [float(q) for q in delta_q_range]
+        delta_q_range = np.array([delta_q_range[0:6],delta_q_range[6:]])
+        return delta_p_range, delta_q_range
 def generate_delta_data(q_0,p_0, data_nums = 500, test_data_scale = 0.6, delta_range_ = np.pi/20):
     """
     生成围绕p_0，以输入为 delta_p,输出为 delta_q 的数据
@@ -253,18 +273,17 @@ def generate_delta_data(q_0,p_0, data_nums = 500, test_data_scale = 0.6, delta_r
     # delta_p = np.hstack((delta_p,q))
     delta_p = np.array(delta_p)
     print("delta_p.shape",delta_p.shape)
-    delta_p_range = [delta_p.min(0), delta_p.max(0) - delta_p.min(0)]
-    delta_q_range = [delta_q.min(0), delta_q.max(0) - delta_q.min(0)]
 
-    # p_0_s = [p_0 for i in range(p.shape[0])]
+    delta_p_range, delta_q_range = read_range_from_file("./data/delta_min_max.txt")
     # inputs = np.hstack((delta_p,q))
+    
     inputs = np.array(delta_p)
-    inputs = np.array(noramlization(inputs))
-    outputs = np.array(noramlization(delta_q))
-    test_set = [inputs[int(inputs.shape[0] * test_data_scale):-1], 
-            outputs[int(inputs.shape[0] * test_data_scale):-1]]
-    inputs = inputs[0:int(q.shape[0] * test_data_scale)]
-    outputs = outputs[0:int(p.shape[0] * test_data_scale)]
+    inputs = np.array(noramlization_with_delta_range(inputs,delta_p_range))
+    outputs = np.array(noramlization_with_delta_range(delta_q,delta_q_range))
+    test_set = [inputs[int(data_nums * test_data_scale):-1], 
+            outputs[int(data_nums * test_data_scale):-1]]
+    inputs = inputs[0:int(data_nums * test_data_scale)]
+    outputs = outputs[0:int(data_nums * test_data_scale)]
     return inputs, outputs,test_set, delta_p_range, delta_q_range
 
 def generate_data(data_nums = 1000, q_e =[0,0,0,0,0,0], is_fk = True, 
@@ -329,7 +348,7 @@ def generate_data(data_nums = 1000, q_e =[0,0,0,0,0,0], is_fk = True,
 
 
 if __name__ == "__main__":
-    joints = [1.786661884592403,3.034546055548815,0.9951417076760611,0.1816047499998016,0.2123049364177343,-0.458526236335002]
+    joints = [1.8184, -0.3251,  0.6989, -0.1285, -0.2991, -0.2028]
     robot = get_Robot()
     pos = robot.cal_fk(joints)
     print("position is:")

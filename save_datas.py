@@ -17,7 +17,6 @@ from dynamixel_msgs.msg import MotorStateList
 from pubulisher import JointPub
 
 
-
 def get_joint_angle(msgs):
     motor_states = msgs.motor_states
     joints = []

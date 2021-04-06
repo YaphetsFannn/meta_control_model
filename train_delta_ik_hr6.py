@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 from fk_models import *
 class DIM():
     def __init__(self,config=None,p_start=[],q_start=[],p_tgt=[],batch_size = 20,\
-                 epoch = 10, data_nums = 500,model_path = "./model_trained/delta_net_param.pkl"):
+                 epoch = 10, data_nums = 300,model_path = "./model_trained/delta_net_param.pkl"):
         if config==None:
            self.config = [
                 ('linear', [3, 32]),
@@ -61,16 +61,22 @@ class DIM():
         self.batch_size = batch_size
         self.epoch = epoch
         self.data_nums = data_nums
-
+        self.t_vs_v = 0.9
+        self.delta_p_range, self.delta_q_range = read_range_from_file("./data/delta_min_max.txt")
+        
     def generate_data(self):
         self.hr6 = get_Robot()
         self.p_s_cal = self.hr6.cal_fk(self.q_s)
-        self.inputs, self.outputs, test_set, self.delta_p_range, self.delta_q_range = generate_delta_data(self.q_s, self.p_s_cal,self.data_nums,0.1)
+        # notice here
+        self.inputs, self.outputs, test_set, _,_ = \
+                                    generate_delta_data(self.q_s, self.p_s_cal,self.data_nums,self.t_vs_v)
+        print("self.delta_p_range,self.delta_q_range****************************")
+        print(self.delta_p_range,self.delta_q_range)
         self.test_set = [np.array(test_set[0]).astype(float), np.array(test_set[1]).astype(float)]
         self.inputs = self.inputs.astype(float)
         self.outputs = self.outputs.astype(float)
     
-    def train_DIM(self):
+    def train_DIM(self,debug=True):
         torch.manual_seed(222)
         torch.cuda.manual_seed_all(222)
         np.random.seed(222)
@@ -91,21 +97,23 @@ class DIM():
                     prediction_ = self.DeltaModel(test_x)
                     test_loss = self.cost(prediction_, test_y)
                     losses_test.append(test_loss.data.numpy())
-                    print("************************",i,"***********************")
-                    print(i, " training loss ", np.mean(batch_loss), " test loss ", test_loss.data.numpy())
-
                     joint_1 = [delta_q_i * delta_q_range[1] + delta_q_range[0] +\
                                     self.q_s for delta_q_i in prediction_.data.numpy()]
-                    print("joint[i]:")
-                    print(joint_1[-1])
                     p_pre = np.array([self.hr6.cal_fk(joint_i) for joint_i in joint_1])
-                    print("p_pre")
-                    print(p_pre[-1])
                     p_real = [  self.p_s_cal + inputs_[0:3] * delta_p_range[1] + delta_p_range[0] \
                                 for inputs_ in test_x.data.numpy()]
-                    print("p_real")
-                    print(p_real[-1])
-                    print(self.p_s_cal)
+                    if debug:
+                        print("************************",i,"***********************")
+                        print(i, " training loss ", np.mean(batch_loss), \
+                                " test loss ", test_loss.data.numpy())
+                        print("joint[i]:")
+                        print(joint_1[-1])
+                        print("p_pre")
+                        print(p_pre[-1])
+                        print("p_real")
+                        print(p_real[-1])
+                        print("p_cal")
+                        print(self.p_s_cal)
 
                     dist_0 = []
                     dist_1 = []
@@ -149,6 +157,21 @@ class DIM():
                         color='b',
                         alpha=0.2)
         plt.show()
+
+    def move_delta(self,delta_p):
+        input_ = np.array((delta_p-self.delta_p_range[0]) / self.delta_p_range[1])
+        print("delta p :",delta_p)
+        input_ = torch.tensor(input_, dtype = torch.float, requires_grad = False)
+        prediction_ = self.DeltaModel(input_)
+        delta_q_pre = [delta_q_i * self.delta_q_range[1] + self.delta_q_range[0]\
+                    for delta_q_i in prediction_.data.numpy()]
+        return delta_q_pre
+
+    def go_to_tgt(self):
+        delta_p = self.p_t - self.p_s
+        return self.move_delta(delta_p)
+        
+
     def save_model(self,path = "./model_trained/delta_net_param.pkl"):
         # torch.save(self.DeltaModel, path)
         torch.save(self.DeltaModel.state_dict(), path)
@@ -159,11 +182,14 @@ def str2f(s):
     return data
 
 def main(args):
-    deltaModel = DIM(q_start=str2f("115 -12 60 -14.06 -44 -19"))
+    deltaModel = DIM(q_start=str2f("108.69 -9.38 51.56 -14.06 -38.09 -16.99"),\
+                    p_tgt=str2f("39.4088 -9.5203 4.3103"),\
+                    p_start=str2f("38.2714 -8.1530 11.8022"))
     # deltaModel = DIM(q_start=str2f("108.69 -9.38 51.56 -14.06 -38.09 -16.99"))
     deltaModel.generate_data()
     deltaModel.train_DIM()
     deltaModel.plot_Img()
+    # deltaModel.go_to_tgt()
     # deltaModel.save_model()
 
 
