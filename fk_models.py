@@ -167,8 +167,8 @@ def get_Robot():
     link_file = "./data/links.txt"
     with open(link_file,'r') as rf:
         line = rf.readline().strip().split(" ")
-        print("read line :")
-        print(line)
+        # print("read line :")
+        # print(line)
         links_len = [round(float(num),2) for num in line]
         DH_ = [
             [0,     -pi/2,      -pi/2,   -pi/2,     pi/2,   pi/2,        pi/2],      # alpha

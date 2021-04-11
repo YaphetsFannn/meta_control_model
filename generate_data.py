@@ -29,10 +29,13 @@ def main(args):
     print("generate joints:")
     print(v_joints.shape)
     pku_hr6 = get_Robot()
+    count = 1
     with open(os.path.join("./data",output_f+".txt"),'w') as wf:
         for joint in v_joints:
             tmp_p = pku_hr6.cal_fk(joint,True)
-            
+            if count % 100 == 0:
+                print(count)
+            count = count + 1
             for i in range(3):
                 wf.write(str(round(tmp_p[i],2)))
                 wf.write(" ")
@@ -46,7 +49,7 @@ def main(args):
 
 if __name__ == '__main__':
     argparser = argparse.ArgumentParser()
-    argparser.add_argument('--n', type=int, help='number of insert', default=10)
+    argparser.add_argument('--n', type=int, help='number of insert', default=100)
     argparser.add_argument('--i', type=str, help='file name(or path)', default="real_data")
     argparser.add_argument('--o', type=str, help='file name(or path)', default="generated_data")
     args = argparser.parse_args()

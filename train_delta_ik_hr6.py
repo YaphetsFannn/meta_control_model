@@ -15,7 +15,8 @@ import matplotlib.pyplot as plt
 from fk_models import *
 class DIM():
     def __init__(self,config=None,p_start=[],q_start=[],p_tgt=[],batch_size = 20,\
-                 epoch = 10, data_nums = 300,model_path = "./model_trained/delta_net_param.pkl"):
+                 epoch = 10, data_nums = 300,model_path = "./model_trained/delta_net_param.pkl",\
+                 t_vs_v = 0.9):
         if config==None:
            self.config = [
                 ('linear', [3, 32]),
@@ -61,7 +62,7 @@ class DIM():
         self.batch_size = batch_size
         self.epoch = epoch
         self.data_nums = data_nums
-        self.t_vs_v = 0.9
+        self.t_vs_v = t_vs_v
         self.delta_p_range, self.delta_q_range = read_range_from_file("./data/delta_min_max.txt")
         
     def generate_data(self):
@@ -70,8 +71,8 @@ class DIM():
         # notice here
         self.inputs, self.outputs, test_set, _,_ = \
                                     generate_delta_data(self.q_s, self.p_s_cal,self.data_nums,self.t_vs_v)
-        print("self.delta_p_range,self.delta_q_range****************************")
-        print(self.delta_p_range,self.delta_q_range)
+        # print("self.delta_p_range,self.delta_q_range****************************")
+        # print(self.delta_p_range,self.delta_q_range)
         self.test_set = [np.array(test_set[0]).astype(float), np.array(test_set[1]).astype(float)]
         self.inputs = self.inputs.astype(float)
         self.outputs = self.outputs.astype(float)
@@ -102,10 +103,12 @@ class DIM():
                     p_pre = np.array([self.hr6.cal_fk(joint_i) for joint_i in joint_1])
                     p_real = [  self.p_s_cal + inputs_[0:3] * delta_p_range[1] + delta_p_range[0] \
                                 for inputs_ in test_x.data.numpy()]
+                    print("deltaq:")
+                    print(prediction_.data.numpy()[-1])    
                     if debug:
                         print("************************",i,"***********************")
                         print(i, " training loss ", np.mean(batch_loss), \
-                                " test loss ", test_loss.data.numpy())
+                                " test loss ", test_loss.data.numpy())                
                         print("joint[i]:")
                         print(joint_1[-1])
                         print("p_pre")
@@ -162,9 +165,13 @@ class DIM():
         input_ = np.array((delta_p-self.delta_p_range[0]) / self.delta_p_range[1])
         print("delta p :",delta_p)
         input_ = torch.tensor(input_, dtype = torch.float, requires_grad = False)
+        print("input p :",input_.data.numpy())
+        
         prediction_ = self.DeltaModel(input_)
-        delta_q_pre = [delta_q_i * self.delta_q_range[1] + self.delta_q_range[0]\
-                    for delta_q_i in prediction_.data.numpy()]
+        print("output:",prediction_.data.numpy())
+        delta_norme_out = prediction_.data.numpy()
+        delta_q_pre = delta_norme_out * self.delta_q_range[1] + self.delta_q_range[0]
+        print("delta q:",delta_q_pre)
         return delta_q_pre
 
     def go_to_tgt(self):

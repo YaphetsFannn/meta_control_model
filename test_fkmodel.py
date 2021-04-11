@@ -29,6 +29,22 @@ def main(args):
     mean_y = np.mean(delta_p[:,1])
     mean_z = np.mean(delta_p[:,2])
     print(mean_x,mean_y,mean_z)
+    max_dis = 3
+    dis_delta_p = []
+    for idx,p1 in enumerate(pos_real):
+        for idx2,p2 in enumerate(pos_real):
+            if idx == idx2:
+                continue
+            dis_real = cal_dis(p1,p2)
+            if dis_real > max_dis:
+                continue
+            delat_p_real = p2 - p1
+            delat_p_cal = pos_pre[idx2] - pos_pre[idx]
+            dis_delta_p.append(cal_dis(delat_p_cal,delat_p_real))
+    dis_delta_p = np.array(dis_delta_p)
+    print("shape is ",dis_delta_p.shape)
+    print("mean dis:",dis_delta_p.mean())
+
 
 
             

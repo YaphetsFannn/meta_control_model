@@ -142,6 +142,7 @@ def main(args):
                     for i in range(0,p_pre.shape[0]):
                         tmp = np.array(p_pre[i] - p_real[i], dtype=np.float64)
                         dist_0.append(np.linalg.norm(tmp))
+                    print("mean dis:",np.array(dist_0).mean())
                     losses_train.append(dist_0)
                     
         batch_loss = []
@@ -202,7 +203,7 @@ def main(args):
                 wf.write(",")
             else:
                 wf.write("\n")
-    torch.save(ik_nn, "./model_trained/net.pkl")
+    # torch.save(ik_nn, "./model_trained/net.pkl")
 
 
 if __name__ == "__main__":
