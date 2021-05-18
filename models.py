@@ -7,7 +7,6 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 import torch.utils.data as Data
-import matplotlib.pyplot as plt
 # from sklearn.model_selection import train_test_split
 import numpy as np
 from torchvision import datasets, transforms

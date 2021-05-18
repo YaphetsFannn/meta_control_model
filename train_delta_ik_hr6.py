@@ -11,6 +11,7 @@ import  argparse
 import numpy as np
 from models import ann_model
 import matplotlib as mpl
+mpl.use('TkAgg')
 import matplotlib.pyplot as plt
 from fk_models import *
 from mpl_toolkits.mplot3d import Axes3D
@@ -25,9 +26,9 @@ class DIM():
                 ('relu', [True]),
                 # ('bn', [128]),
 
-                # ('linear', [64, 64]),
-                # ('relu', [True]),
-                # # ('bn', [128]),
+                ('linear', [64, 64]),
+                ('relu', [True]),
+                # ('bn', [128]),
 
                 # ('linear', [64, 128]),
                 # ('relu', [True]),

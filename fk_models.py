@@ -6,7 +6,8 @@ import numpy as np
 import math
 from functools import reduce
 np.set_printoptions(precision=4, suppress=True)
-
+import matplotlib as mpl
+mpl.use('TkAgg')
 import matplotlib.pyplot as plt
 import numpy as np
 import argparse

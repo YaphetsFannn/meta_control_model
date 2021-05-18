@@ -13,6 +13,7 @@ from fk_models import *
 from models import *
 # import pandas as pd
 import matplotlib as mpl
+mpl.use('TkAgg')
 import matplotlib.pyplot as plt
 
 #整体模型架构
@@ -21,20 +22,20 @@ config = [
     ('relu', [True]),
     # ('bn', [64]),
 
-    # ('linear', [64, 32]),
-    # ('relu', [True]),
+    ('linear', [64, 64]),
+    ('relu', [True]),
     # ('bn', [128]),
 
     # # ('linear', [256, 128]),
     # # ('relu', [True]),
     # # # ('bn', [128]),
 
-    # ('linear', [64, 32]),
-    # ('relu', [True]),
+    ('linear', [64, 32]),
+    ('relu', [True]),
     # # ('bn', [32]),
     # ('linear', [32, 32]),
     # ('relu', [True]),
-    ('linear', [64, 6]),
+    ('linear', [32, 6]),
     # ('sigmoid', [True])
 ]
 p_range, q_range = [],[]
@@ -134,6 +135,9 @@ def main(args):
                         print("outputs:",prediction_.data.numpy()[-1])
                         print("test_real",test_set[1][-1])                        
                         joint_1 = [q_i * q_range[1] + q_range[0] for q_i in prediction_.data.numpy()]
+                        print("joint real:", (test_set[1][-1] * q_range[1] + q_range[0])/np.pi * 180)
+                        print("joint out:", joint_1[-1]/np.pi * 180)
+
                         p_pre = np.array([pku_hr6.cal_fk(joint_i) for joint_i in joint_1])
                         p_real = [inputs_[0:3]*p_range[1] + p_range[0] for inputs_ in test_x.data.numpy()]
                         print("p_real",p_real[-1])
@@ -150,8 +154,11 @@ def main(args):
         # MINI-Batch方法来进行训练
         for start in range(0, len(inputs), batch_size):
             end = start + batch_size if start + batch_size < len(inputs) else len(inputs)
-            xx = torch.tensor(inputs[start:end], dtype = torch.float, requires_grad = True)
-            yy = torch.tensor(outputs[start:end], dtype = torch.float, requires_grad = True)
+            # xx = torch.tensor(inputs[start:end], dtype = torch.float, requires_grad = True)
+            # yy = torch.tensor(outputs[start:end], dtype = torch.float, requires_grad = True)
+            rand_index = np.random.randint(0, len(inputs), batch_size)
+            xx = torch.tensor(inputs[rand_index], dtype = torch.float, requires_grad = True)
+            yy = torch.tensor(outputs[rand_index], dtype = torch.float, requires_grad = True)
             prediction = ik_nn(xx)
             loss = cost(prediction, yy)
             batch_loss.append(loss.data.numpy())

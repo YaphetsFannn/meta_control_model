@@ -14,6 +14,7 @@ from models import *
 # import pandas as pd
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+plt.rcParams['font.sans-serif'] = ['SimHei']
 
 #整体模型架构
 config = [
@@ -228,7 +229,7 @@ def main(args):
             # dis_max.append(np.percentile(loss_i,75))
             dis_mean.append(loss_i.mean())
         plt.plot(range(len(dis_test)),dis_mean,color='r')
-        plt.xlabel('epoch')
+        plt.xlabel('迭代次数')
         # plt.ylabel('mse loss')
         plt.ylabel('distance between p\' and p (cm)')
 
@@ -263,7 +264,7 @@ def main(args):
 
 if __name__ == "__main__":
     argparser = argparse.ArgumentParser()
-    argparser.add_argument('--epoch', type=int, help='epoch number', default=500)
+    argparser.add_argument('--epoch', type=int, help='epoch number', default=50)
     argparser.add_argument('--n_way', type=int, help='n way', default=5)
     argparser.add_argument('--k_spt', type=int, help='k shot for support set', default=1)
     argparser.add_argument('--k_qry', type=int, help='k shot for query set', default=15)
