@@ -40,12 +40,10 @@ class testIkM():
             prediction_joints = self.ik_nn(test_x)
         return prediction_joints.data.numpy()
 
-if __name__ == "__main__":
-    Pubs = JointPub()    
-    ik_tester = testIkM("./model_trained/net_param.pkl")
-    p_range = []
+def read_min_max(path):
     q_range = []
-    with open("./model_trained/min_max.txt","r") as rf:
+    p_range = []
+    with open(path,"r") as rf:
         line = rf.readline()
         line = line.strip().split(",")
         line = [float(num) for num in line]
@@ -58,84 +56,135 @@ if __name__ == "__main__":
         p_range.append(line[3:])
     p_range = np.array(p_range)
     q_range = np.array(q_range)
-    print(p_range)
-    print(q_range)
+    return p_range,q_range
 
-    pku_hr6 = get_Robot()
-    # position_tgt = [[28.4599,-2.9071,16.9371],[28.5224,-3.5886,18.9614]]
-    msg = rospy.wait_for_message('/hand_position',position,timeout=10)
-    position_tgt = np.array([msg.ox - 0.8,msg.oy,msg.oz])
-    while position_tgt[0]<5:
-        msg = rospy.wait_for_message('/hand_position',position,timeout=10)
-        position_tgt = np.array([msg.ox,msg.oy,msg.oz])
+def get_ik_res(ik_model,position,q_range,p_range):
     inputs = [(position_tgt - p_range[0])/p_range[1]]    # shape is [[]]
-    
-    print("get msg:")
-    print(msg)
-    print("position_tgt:")
-    print(position_tgt)
-    print(inputs)
-
-    joints = ik_tester.cal_ik(inputs)    
-    print("outputs:",joints)
+    joints = ik_real.cal_ik(inputs)
     joints = [(joint * q_range[1] + q_range[0]) for joint in joints]
-    print("joints:",joints)
+    # print("joints:",joints)
+    # print("outputs:",joints)
     pos_pre = np.array([pku_hr6.cal_fk(joint_i) for joint_i in joints])    
     print("fk reasult:")
     print(pos_pre)
-    pos_real = []
-    for joint in joints:
-        Pubs.publish_jointsR(joint)
-        rospy.sleep(3)
-        msg = rospy.wait_for_message('/hand_position',realsense_camera.msg.position,timeout=10)
-        pos_hand = np.array([msg.hx,msg.hy,msg.hz])
-        delta_move_count = 0
-        while cal_dis(pos_hand,position_tgt) > 1.0:
-            while pos_hand[0]<5 or position_tgt[0]<5:
-                msg = rospy.wait_for_message('/hand_position',position,timeout=10)
-                pos_hand = np.array([msg.hx,msg.hy,msg.hz])
-                position_tgt = np.array([msg.ox,msg.oy,msg.oz])
-            print("*********************",delta_move_count,"**************************")
-            print("pos_hand is:",pos_hand)
-            print("pos_tgt is:",position_tgt)
-            msg_joint =rospy.wait_for_message('/motor_states/pan_tilt_port',MotorStateList,timeout=10)
-            joints_start,valid = get_joint_angle(msg_joint)
-            print("joint_start:",joints_start)
-            while not valid:
-                print("not valid joint")
-                msg_joint =rospy.wait_for_message('/motor_states/pan_tilt_port',MotorStateList,timeout=10)
-                joints_start,valid = get_joint_angle(msg_joint)
-            deltaModel = DIM(q_start=joints_start,\
-                        p_tgt=position_tgt,\
-                        p_start=pos_hand,\
-                        epoch=5,\
-                        data_nums=300,
-                        t_vs_v=0.9)
-            deltaModel.generate_data()
-            deltaModel.train_DIM(debug = False)
-            # deltaModel.plot_Img()
-            deltaModel.save_model()
-            delta_q = deltaModel.go_to_tgt()
-            delta_q = [d_r * R2D for d_r in delta_q]
-            print("delta_q D:",delta_q)
-            print("joint_start:",joints_start)
-            joint_aft_delta = delta_q + joints_start
-            print("pos_hand_cal is:",pku_hr6.cal_fk(joint_aft_delta))
-            Pubs.publish_jointsD(joint_aft_delta)
+    joint = joints[0]
+    return joint
+
+if __name__ == "__main__":
+    need_delta = False
+    Pubs = JointPub()    
+    ik_gene = testIkM("./model_trained/gene_net_param.pkl")
+    ik_real = testIkM("./model_trained/real_net_param.pkl")
+    ik_gene_2 = testIkM("./model_trained/gene_2_net_param.pkl")
+    p_range_real, q_range_real = read_min_max("./model_trained/real_min_max.txt")
+    p_range_gene, q_range_gene = read_min_max("./model_trained/gene_min_max.txt")
+    p_range_gene_2, q_range_gene_2 = read_min_max("./model_trained/gene_2_min_max.txt")
+
+    pos_tgt = []
+    pos_hand = [[],[],[]]
+    pku_hr6 = get_Robot()
+    while True:
+        in_nums = input("next:")
+        if(in_nums==0):
+            break
+        print(in_nums)
+        msg = rospy.wait_for_message('/hand_position',position,timeout=10)
+        position_tgt = np.array([msg.ox - 0.8,msg.oy,msg.oz])
+        while position_tgt[0]<5:
+            msg = rospy.wait_for_message('/hand_position',position,timeout=10)
+            position_tgt = np.array([msg.ox - 0.8,msg.oy,msg.oz])
+        pos_tgt.append(position_tgt)
+        
+        print("get msg:")
+        print(msg)
+        print("position_tgt:")
+        print(position_tgt)
+        joints = []
+        joints.append(get_ik_res(ik_real,position_tgt,q_range_real,p_range_real))
+        joints.append(get_ik_res(ik_gene,position_tgt,q_range_gene,p_range_gene))
+        joints.append(get_ik_res(ik_gene_2,position_tgt,q_range_gene_2,p_range_gene_2))
+
+        for i in range(len(joints)):
+            joint = joints[i]
+            Pubs.publish_jointsR(joint)
             rospy.sleep(3)
-            delta_move_count  = delta_move_count + 1
-            
-            msg = rospy.wait_for_message('/hand_position',position,timeout=100)
-            pos_hand = np.array([msg.hx,msg.hy,msg.hz])
-            position_tgt = np.array([msg.ox,msg.oy,msg.oz])
-            while pos_hand[0]<5 or position_tgt[0]<5:
-                msg = rospy.wait_for_message('/hand_position',position,timeout=10)
+            msg = rospy.wait_for_message('/hand_position',realsense_camera.msg.position,timeout=10)
+            while pos_hand[0]<5:
+                msg = rospy.wait_for_message('/hand_position',position,timeout=100)
                 pos_hand = np.array([msg.hx,msg.hy,msg.hz])
-                position_tgt = np.array([msg.ox,msg.oy,msg.oz])
-            print("pos_hand is:",pos_hand)
-            print("pos_tgt is:",position_tgt)
-            print("distante:",cal_dis(pos_hand,position_tgt))
-            print("***********************************************")
+            pos_hand[i].append(np.array([msg.hx,msg.hy,msg.hz]))
+    pos_real = pos_hand[0]
+    pos_gene = pos_hand[1]
+    pos_gene_2 = pos_hand[2]
+    dis_real,mean_real = distance(pos_real,pos_tgt)
+    dis_gene,mean_gene = distance(pos_gene,pos_tgt)
+    dis_gene_2,mean_gene_2 = distance(pos_gene_2,pos_tgt)
+    print("mean distance:")
+    print(mean_real, mean_gene, mean_gene_2)
+    with open("./data/ik_test_dis.txt","w") as wf:
+        for p_s in zip(pos_tgt,pos_real,pos_gene,pos_gene_2):
+            for p in p_s:
+                wf.write(str(p[0])+" "+str(p[1])+" "+str(p[2])+"|")
+            wf.write("\n")
+    
+    # labels = ["DIM1","DIM2", "DIM3"]
+    # dis_error = [dis_real,dis_gene,dis_gene_2]
+    # bplot = plt.boxplot(dis_error,patch_artist=True, labels=labels)  # 设置箱型图可填充
+    # plt.grid(True)
+    # plt.ylim(0,5)
+    # plt.ylabel("distance (cm)")
+    # plt.xlabel("range (cm)")
+    # plt.show()
+        # if not need_delta:
+        #     continue
+        
+        # delta_move_count = 0
+        # while cal_dis(pos_hand,position_tgt) > 1.0:
+        #     while pos_hand[0]<5 or position_tgt[0]<5:
+        #         msg = rospy.wait_for_message('/hand_position',position,timeout=10)
+        #         pos_hand = np.array([msg.hx,msg.hy,msg.hz])
+        #         position_tgt = np.array([msg.ox,msg.oy,msg.oz])
+        #     print("*********************",delta_move_count,"**************************")
+        #     print("pos_hand is:",pos_hand)
+        #     print("pos_tgt is:",position_tgt)
+        #     msg_joint =rospy.wait_for_message('/motor_states/pan_tilt_port',MotorStateList,timeout=10)
+        #     joints_start,valid = get_joint_angle(msg_joint)
+        #     print("joint_start:",joints_start)
+        #     while not valid:
+        #         print("not valid joint")
+        #         msg_joint =rospy.wait_for_message('/motor_states/pan_tilt_port',MotorStateList,timeout=10)
+        #         joints_start,valid = get_joint_angle(msg_joint)
+        #     deltaModel = DIM(q_start=joints_start,\
+        #                 p_tgt=position_tgt,\
+        #                 p_start=pos_hand,\
+        #                 epoch=5,\
+        #                 data_nums=300,
+        #                 t_vs_v=0.9)
+        #     deltaModel.generate_data()
+        #     deltaModel.train_DIM(debug = False)
+        #     # deltaModel.plot_Img()
+        #     deltaModel.save_model()
+        #     delta_q = deltaModel.go_to_tgt()
+        #     delta_q = [d_r * R2D for d_r in delta_q]
+        #     print("delta_q D:",delta_q)
+        #     print("joint_start:",joints_start)
+        #     joint_aft_delta = delta_q + joints_start
+        #     print("pos_hand_cal is:",pku_hr6.cal_fk(joint_aft_delta))
+        #     Pubs.publish_jointsD(joint_aft_delta)
+        #     rospy.sleep(3)
+        #     delta_move_count  = delta_move_count + 1
+            
+        #     msg = rospy.wait_for_message('/hand_position',position,timeout=100)
+        #     pos_hand = np.array([msg.hx,msg.hy,msg.hz])
+        #     position_tgt = np.array([msg.ox,msg.oy,msg.oz])
+        #     while pos_hand[0]<5 or position_tgt[0]<5:
+        #         msg = rospy.wait_for_message('/hand_position',position,timeout=10)
+        #         pos_hand = np.array([msg.hx,msg.hy,msg.hz])
+        #         position_tgt = np.array([msg.ox,msg.oy,msg.oz])
+        #     print("pos_hand is:",pos_hand)
+        #     print("pos_tgt is:",position_tgt)
+        #     print("distante:",cal_dis(pos_hand,position_tgt))
+        #     print("***********************************************")
             
     # deltaModel.go_to_tgt()
     # deltaModel.save_model()`

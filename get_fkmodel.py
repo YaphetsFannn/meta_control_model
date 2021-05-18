@@ -119,11 +119,11 @@ def getErrorBar(x,y,coeff):
     errors = [[] for i in range(10)]
     for x_,y_ in zip(x,y):
         losses = dot(x_,coeff) - y_
-        errors[int((y_ - mi)/step_y)].append(losses)
-    labels = [str(round((i+0.5)*step_y+mi,2)) for i in range(10)]
+        errors[int((y_ - mi)/step_y)].append(abs(losses))
+    labels = [str(int((i+0.5)*step_y+mi)) for i in range(10)]
     bplot = plt.boxplot(errors,showmeans=True,patch_artist=True, labels=labels)  # 设置箱型图可填充
     plt.grid(True)
-    plt.ylim(-10,10)
+    plt.ylim(0,5)
     plt.ylabel("distance (cm)")
     plt.xlabel("range (cm)")
     plt.show()
@@ -179,8 +179,8 @@ if __name__ == "__main__":
     argparser.add_argument('--file', type=str, help='file name(or path)', default="real_data")
     argparser.add_argument('--n', type=int, help='data_num', default=100)
     argparser.add_argument('--r', type=bool, help='real raw data from file', default=True)
-    argparser.add_argument('--e', type=int, help='epoch', default=400)
-    argparser.add_argument('--lr', type=float, help='learning rate', default=1e-1)
+    argparser.add_argument('--e', type=int, help='epoch', default=50)
+    argparser.add_argument('--lr', type=float, help='learning rate', default=1e-1/2)
     args = argparser.parse_args()
     file_names = args.file
 
@@ -256,7 +256,7 @@ if __name__ == "__main__":
     # coeff_init = [  [-1.25,-25.5,10.5,8,0],
     #                 [-25.5,10,10.5,8],
     #                 [-1.25,-25.5,10.5,8,0]]
-    coeff_init = [-1.25,-25.5,10,10.5,11,0,0,0]
+    coeff_init = [-1.25,-21.5,10,10.5,11,0,0,0]
     coeff_init = np.array(coeff_init)
 
     # x = mat(coeff_[i])
@@ -288,6 +288,8 @@ if __name__ == "__main__":
     coeff_grad, loss_grad = gradient_decent(x,y,coeff_init,args.lr,args.e,0.5/args.e)
     x_table = range(0,len(loss_grad))
     plt.plot(x_table,loss_grad)
+    plt.ylabel("mean distance (cm)")
+    plt.xlabel("epoch")
     plt.show()
     # coeff_grad, loss_grad = gradient_decent(x,y,coeff_grad,1e-2,200)
     # x_table = range(0,len(loss_grad))

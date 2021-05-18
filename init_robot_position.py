@@ -25,6 +25,7 @@ if __name__ == "__main__":
     angle[15] = 0.38
     angle[16] = -0.38
     # angle[1],angle[3],angle[5],angle[21],angle[23],angle[25] = 1.8205, -0.3268,  0.6991, -0.1311, -0.299 , -0.1978
+    # angle[1],angle[3],angle[5],angle[21],angle[23],angle[25] = 0,0,0,0,0,0
     angle[1],angle[3],angle[5],angle[21],angle[23],angle[25] = 90,22,24,25,5,-35
     for  i in range(26):
         data = angle[i] + del_[i];

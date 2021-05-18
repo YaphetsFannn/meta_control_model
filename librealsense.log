@@ -74,3 +74,6 @@
 2021-04-11 19:24:13 INFO: Subdevice 1 produced empty frame
 2021-04-11 19:24:13 INFO: Subdevice 1 produced empty frame
 2021-04-11 19:24:13 INFO: Subdevice 1 produced empty frame
+2021-04-13 20:51:08 INFO: UVC device detected with VID = 0x8086 PID = 0xaa5
+2021-04-13 20:51:08 INFO: USB Port number =2-2
+2021-04-13 20:51:08 INFO: Connecting to Intel RealSense SR300

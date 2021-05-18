@@ -22,9 +22,9 @@ def main(args):
     n = joints.shape[0]
     for i in range(n):
         v_joints.append(joints[i])
-        # for _ in range(args.n):
-        #     j = np.random.randint(0,n)
-        #     v_joints.append([(j_i+j_j)/2 for j_i,j_j in zip(joints[i],joints[j])])
+        for _ in range(args.n):
+            j = np.random.randint(0,n)
+            v_joints.append([(j_i+j_j)/2 for j_i,j_j in zip(joints[i],joints[j])])
     v_joints = np.array(v_joints)
     print("generate joints:")
     print(v_joints.shape)

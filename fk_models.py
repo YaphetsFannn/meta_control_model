@@ -15,7 +15,7 @@ from numpy import sin,cos,eye,dot,mat
 from numpy.linalg import inv
 import sympy as sym
 from sympy import symbols as sb
-from sympy import *
+# from sympy import *
 import warnings
 import requests
 import random
@@ -210,6 +210,8 @@ def load_data(file, is_fk = True, test_data_scale = 0.8):
 
 def cal_dis(p_a, p_b):
     ret = 0
+    if(p_b[0]<5 or p_a[0]<5):
+        return 0
     for p_a_, p_b_ in zip(p_a,p_b):
         tmp = np.square(p_a_ - p_b_)
         ret = ret + tmp
@@ -217,14 +219,22 @@ def cal_dis(p_a, p_b):
     ret = math.sqrt(ret)
     return ret
 
-def distance(positions_a, positions_b):
-    assert positions_a.shape == positions_b.shape
+def distance(positions_a, positions_b,fix = 0):
+    # assert positions_a.shape == positions_b.shape
     # print(positions_a)
     # print(positions_b)
-    dis = [cal_dis(p_a, p_b) for p_a, p_b in zip(positions_a, positions_b)]
+    dis = [cal_dis(p_a, p_b) - fix for p_a, p_b in zip(positions_a, positions_b)]
+    j = 0
+    for i in range(len(dis)):
+        if dis[j]<0.1:
+            dis.pop(j)
+        else:
+            j += 1
     dis = np.array(dis)
+
     mean = np.mean(dis)
     return dis,mean
+
 
 
 def noramlization(data,has_equle=False):
