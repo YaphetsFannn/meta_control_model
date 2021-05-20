@@ -13,8 +13,26 @@ import numpy as np
 import matplotlib.pyplot as plt
 from copy import deepcopy
 import os
-from test_ik_model import read_min_max
+# from test_ik_model import read_min_max
 import logging
+
+def read_min_max(path):
+    q_range = []
+    p_range = []
+    with open(path,"r") as rf:
+        line = rf.readline()
+        line = line.strip().split(",")
+        line = [float(num) for num in line]
+        q_range.append(line[0:6])
+        q_range.append(line[6:])
+        line = rf.readline()
+        line = line.strip().split(",")
+        line = [float(num) for num in line]
+        p_range.append(line[0:3])
+        p_range.append(line[3:])
+    p_range = np.array(p_range)
+    q_range = np.array(q_range)
+    return p_range,q_range
 
 FLAGS = argparse.ArgumentParser()
 links_len = np.array([-0.69, -20.46,11.68,10.43,10.14,-0.94,-1.68,0.40])
@@ -22,13 +40,13 @@ p_range,q_range = read_min_max("./model_trained/min_max.txt")
 
 # Parameters
 FLAGS.add_argument('--mode', type=str, choices=['maml', 'reptile'])
-FLAGS.add_argument('--n_shot', type=int, default=200,
+FLAGS.add_argument('--n_shot', type=int, default=50,
     help= "How many samples points to regress on while training.")
 # FLAGS.add_argument('--train_func', type=str, choices=['sin', 'cos', 'linear'], default='sin',
 #     help = "Base function you want to use for traning")
 # FLAGS.add_argument('--batch_size', type=int, help='update steps for finetunning', default=40)
 FLAGS.add_argument('--iterations', type=int, default=20000)
-FLAGS.add_argument('--outer_step_size', type=float, default=0.001)
+FLAGS.add_argument('--outer_step_size', type=float, default=0.1)
 FLAGS.add_argument('--inner_step_size', type=float, default=0.02)
 FLAGS.add_argument('--inner_grad_steps', type=int, default=1)
 FLAGS.add_argument('--eval_grad_steps', type=int, default=50)    
@@ -36,6 +54,7 @@ FLAGS.add_argument('--eval_iters', type=int, default=5,
     help='How many testing samples of k different shots you want to run')
 FLAGS.add_argument('--log', type=str, default="./logs/maml_ik_log.txt", 
     help="TensorBoard Logging")
+FLAGS.add_argument('--model_name', type=str, default="test")
 FLAGS.add_argument('--seed', type=int, default=1)
 
 device = ('cuda' if torch.cuda.is_available() else 'cpu')
@@ -71,10 +90,10 @@ def load_joint():
 joint_all, joint_all_raw = load_joint()
 # print("joint shape ",joint_all.shape)
 
-def fk_func(joint_alls,links_len_rand):
+def fk_func(joint_alls,links_len_rand,data_nums=600):
     robot = get_Robot_rand(links_len_rand)
     robot_init = get_Robot_rand(links_len)
-    random_index = np.random.randint(0, len(joint_alls), 200)
+    random_index = np.random.randint(0, len(joint_alls), data_nums)
     joint_of_task = joint_alls[random_index]
     positions = np.array([robot.cal_fk(joint) for joint in joint_of_task])
     positions_init = np.array([robot_init.cal_fk(joint) for joint in joint_of_task])
@@ -83,7 +102,7 @@ def fk_func(joint_alls,links_len_rand):
     # print("positions.shape ",positions.shape)
     return joint_of_task, positions
     
-def generate(func,joint_alls):
+def generate(func,joint_alls,data_nums=600):
     # generate random y
     np.array([-0.69, -20.46,11.68,10.43,10.14,-0.94,-1.68,0.40])
     rand_delta = []
@@ -98,7 +117,7 @@ def generate(func,joint_alls):
     rand_delta = np.array(rand_delta)
     rand_link = links_len + rand_delta
     # print("rand link",rand_link)
-    joint_of_task, pos_of_task = func(joint_alls, rand_link)
+    joint_of_task, pos_of_task = func(joint_alls, rand_link,data_nums)
     return joint_of_task, pos_of_task
 
 def select_points(joints,position, k):
@@ -114,11 +133,15 @@ def plot_tensorboard(y_eval, pred, k, n , learner, wave_name='SinWave'):
                 'Gradient_Step_{}'.format(len(pred['pred'])-1), pred['pred'][-1][j][0], j)  
 
 class Meta_Learning:
-    def __init__(self, model):
+    def __init__(self, model,model_name="test"):
         self.model = model.to(device)
+        self.init_model = model.to(device)
+        self.train_losses = []
+        self.eval_losses = []
+        self.model_name = model_name
         # self.writer = writer
     
-    def train_maml(self, func, k, iterations, outer_step_size, inner_step_size, 
+    def train_maml(self, func, shots, iterations, outer_step_size, inner_step_size, 
         inner_gradient_steps, tasks=5):
         loss = 0
         batches = 0
@@ -126,12 +149,12 @@ class Meta_Learning:
             init_weights = deepcopy(self.model.state_dict())
             # generate new tasks
             joint_of_task, pos_of_task = generate(func,joint_all)
-            joint_test,pos_test = select_points(joint_of_task, pos_of_task, k)
+            joint_test,pos_test = select_points(joint_of_task, pos_of_task, shots)
             # logger.info("joint_test shape",np.array(joint_test).shape)
             meta_params = {}
             for task in range(tasks):
                 # sample for meta-update
-                joint_train, pos_train = select_points(joint_of_task, pos_of_task, k)
+                joint_train, pos_train = select_points(joint_of_task, pos_of_task, shots)
                 for grad_step in range(inner_gradient_steps):
                     loss_base = self.train_loss(pos_train,joint_train)
                     loss_base.backward()
@@ -150,7 +173,10 @@ class Meta_Learning:
             learning_rate = outer_step_size * (1 - iteration/iterations)
             self.model.load_state_dict({name: init_weights[name] - 
                 learning_rate/tasks * meta_params[name] for name in init_weights})
-            logger.info("MAML/Training/Loss/{} {}".format(loss/batches, iteration))
+            if(iteration % 100 == 0):
+                logger.info("MAML/Training/Loss/{} {}".format(loss/batches, iteration))
+                self.train_losses.append(loss/batches)
+        self.write_to("./logs/loss_train_"+str(shots)+"_"+self.model_name+".txt",self.train_losses)
             # if(iteration % 1000 == 0):
             #     pred = self.predict(position_all[:,None])
             #     for i in range(len(position_all)):
@@ -191,20 +217,53 @@ class Meta_Learning:
         loss = (out - y).pow(2).mean()
         return loss
 
-    def eval(self, pos_all, k, gradient_steps=10, inner_step_size=0.02):
-        joint_p,pos_p = select_points(pos_all, k)
+    def eval(self, joint_eval, pos_eval, k, gradient_steps=40, inner_step_size=0.02):
+        joint_p,pos_p = select_points(joint_eval, pos_eval, k)
         pred = [self.predict(pos_p[:,None])]
         meta_weights = deepcopy(self.model.state_dict())
+        self.eval_losses=[]
         for i in range(gradient_steps):
             loss_base = self.train_loss(pos_p,joint_p)
+            self.eval_losses.append(loss_base.cpu().data.numpy())
             loss_base.backward()
             for param in self.model.parameters():
                 param.data -= inner_step_size * param.grad.data
-            pred.append(self.predict(pos_all[:, None]))
-        loss = np.power(pred[-1] - y_all,2).mean()
+            pred.append(self.predict(pos_eval[:, None]))
+        loss = np.power(pred[-1] - joint_all,2).mean()
         logger.info("eval loss is {}".format(loss))
+        self.write_to("./logs/loss_eval_"+str(k)+"_"+self.model_name+".txt",self.eval_losses)
         self.model.load_state_dict(meta_weights)
-        return {"pred": pred, "sampled_points":(x_p, y_p)}
+        # return {"pred": pred, "sampled_points":(x_p, y_p)}
+
+    def eval_comp(self, joint_eval, pos_eval, k, gradient_steps=40, inner_step_size=0.02):
+        joint_p,pos_p = select_points(joint_eval, pos_eval, k)
+        pred = [self.predict(pos_p[:,None])]
+        init_weights = deepcopy(self.init_model.state_dict())
+        self.eval_losses=[]
+        for i in range(gradient_steps):
+            loss_base = self.train_loss(pos_p,joint_p)
+            self.eval_losses.append(loss_base.cpu().data.numpy())
+            loss_base.backward()
+            for param in self.model.parameters():
+                param.data -= inner_step_size * param.grad.data
+            pred.append(self.predict(pos_eval[:, None]))
+        loss = np.power(pred[-1] - joint_all,2).mean()
+        logger.info("eval loss cmp is {}".format(loss))
+        self.write_to("./logs/loss_eval_cmp_"+str(k)+"_"+self.model_name+".txt",self.eval_losses)
+        self.init_model.load_state_dict(init_weights)
+        # return {"pred": pred, "sampled_points":(x_p, y_p)}
+
+    def write_to(self, file, list):
+        ary = np.array(list)
+        with open(file,"w") as wf:
+            for a in ary:
+                wf.write(str(a)+"\n")
+
+    def save_model(self,path = "./model_trained/meta_ik.pkl"):
+            # torch.save(self.DeltaModel, path)
+            torch.save(self.model.state_dict(), path)
+            PATH = "./model_trained/net_param.pkl"
+            torch.save(self.model, "./model_trained/meta_ik_net.pkl")
 
     def predict(self, x):
         x = torch.tensor(x, dtype=torch.float32, device=device)
@@ -233,7 +292,7 @@ def main():
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
     
-    k = args.n_shot
+    shots = args.n_shot
     iterations = args.iterations
     funcs = fk_func
     # writer = SummaryWriter(args.logdir)
@@ -246,8 +305,9 @@ def main():
 
     # model = Meta_Wave(64)
     model = ann_model(train_ik_hr6.config)
-    meta = Meta_Learning(model)
-    meta.train_maml(funcs, k, iterations, args.outer_step_size, args.inner_step_size,
+    model_name = args.model_name
+    meta = Meta_Learning(model,model_name)
+    meta.train_maml(funcs, shots, iterations, args.outer_step_size, args.inner_step_size,
         args.inner_grad_steps)
     learner = 'maml'
 
@@ -255,11 +315,12 @@ def main():
     # eval
     eval_iters = args.eval_iters
     gradient_steps = args.eval_grad_steps
-    inner_step_size = 0.01
+    inner_step_size = args.inner_step_size
 
-    pos_eval, _  = generate(f,joint_all)
-    for sample in [5,10,20]:
-        pred = meta.eval(pos_eval, sample, gradient_steps, inner_step_size)
+    joint_eval, pos_eval = generate(fk_func,joint_all,data_nums=1000)
+    for sample in [50,200,500]:
+        meta.eval(joint_eval, pos_eval, sample, gradient_steps, inner_step_size)
+        meta.eval_comp(joint_eval, pos_eval, sample, gradient_steps, inner_step_size)
         # plot_tensorboard(pos_eval, pred, sample, n, learner, wave_name=name)
 
     # writer.close()

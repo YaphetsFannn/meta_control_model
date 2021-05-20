@@ -168,3 +168,116 @@ MAML/Training/Loss/0.304860333909 164
 MAML/Training/Loss/0.304450541681 165
 MAML/Training/Loss/0.30410365059 166
 MAML/Training/Loss/0.303702418595 167
+
+ Trainnig Args: Namespace(eval_grad_steps=50, eval_iters=5, inner_grad_steps=1, inner_step_size=0.02, iterations=2000, log='./logs/maml_ik_log.txt', mode=None, n_shot=200, outer_step_size=0.001, seed=1)
+MAML/Training/Loss/0.385320347548 0
+MAML/Training/Loss/0.336921843916 100
+MAML/Training/Loss/0.292086743612 200
+MAML/Training/Loss/0.260181873502 300
+MAML/Training/Loss/0.235370873862 400
+MAML/Training/Loss/0.216223047772 500
+MAML/Training/Loss/0.200876435828 600
+MAML/Training/Loss/0.188628904564 700
+MAML/Training/Loss/0.178464144576 800
+MAML/Training/Loss/0.170036377153 900
+MAML/Training/Loss/0.162769143462 1000
+MAML/Training/Loss/0.156716793393 1100
+MAML/Training/Loss/0.151538595142 1200
+MAML/Training/Loss/0.14698438448 1300
+MAML/Training/Loss/0.143042038699 1400
+MAML/Training/Loss/0.13954750067 1500
+MAML/Training/Loss/0.136413504221 1600
+MAML/Training/Loss/0.13363827968 1700
+MAML/Training/Loss/0.13115958936 1800
+MAML/Training/Loss/0.128938896827 1900
+
+ Trainnig Args: Namespace(eval_grad_steps=50, eval_iters=5, inner_grad_steps=1, inner_step_size=0.02, iterations=2000, log='./logs/maml_ik_log.txt', mode=None, n_shot=200, outer_step_size=0.001, seed=1)
+MAML/Training/Loss/0.363643205166 0
+MAML/Training/Loss/0.336295725213 100
+MAML/Training/Loss/0.293576608947 200
+MAML/Training/Loss/0.261089060374 300
+MAML/Training/Loss/0.236157443027 400
+MAML/Training/Loss/0.216822621402 500
+MAML/Training/Loss/0.201077180302 600
+MAML/Training/Loss/0.18859757517 700
+MAML/Training/Loss/0.178416278021 800
+MAML/Training/Loss/0.169980984738 900
+MAML/Training/Loss/0.162935073922 1000
+MAML/Training/Loss/0.156830023838 1100
+MAML/Training/Loss/0.151579757759 1200
+MAML/Training/Loss/0.147026921672 1300
+MAML/Training/Loss/0.143071212426 1400
+MAML/Training/Loss/0.139619026452 1500
+MAML/Training/Loss/0.136508997874 1600
+MAML/Training/Loss/0.133655153854 1700
+MAML/Training/Loss/0.131187912169 1800
+MAML/Training/Loss/0.128932345472 1900
+
+ Trainnig Args: Namespace(eval_grad_steps=50, eval_iters=5, inner_grad_steps=1, inner_step_size=0.02, iterations=2000, log='./logs/maml_ik_log.txt', mode=None, n_shot=200, outer_step_size=0.001, seed=1)
+MAML/Training/Loss/0.386396491528 0
+
+ Trainnig Args: Namespace(eval_grad_steps=50, eval_iters=5, inner_grad_steps=1, inner_step_size=0.02, iterations=2000, log='./logs/maml_ik_log.txt', mode=None, n_shot=200, outer_step_size=0.001, seed=1)
+MAML/Training/Loss/0.38198825717 0
+MAML/Training/Loss/0.335373364581 100
+MAML/Training/Loss/0.292789683161 200
+MAML/Training/Loss/0.260718604952 300
+MAML/Training/Loss/0.236016994291 400
+MAML/Training/Loss/0.216412926294 500
+MAML/Training/Loss/0.200805711176 600
+MAML/Training/Loss/0.188285363197 700
+MAML/Training/Loss/0.178096315094 800
+MAML/Training/Loss/0.169686915142 900
+MAML/Training/Loss/0.162568233751 1000
+MAML/Training/Loss/0.156446678708 1100
+MAML/Training/Loss/0.151212563566 1200
+MAML/Training/Loss/0.146752130369 1300
+MAML/Training/Loss/0.142790845458 1400
+MAML/Training/Loss/0.139337257426 1500
+MAML/Training/Loss/0.136272593262 1600
+MAML/Training/Loss/0.133466847753 1700
+MAML/Training/Loss/0.130999644034 1800
+MAML/Training/Loss/0.128784968924 1900
+eval loss is 0.071908540247
+eval loss is 0.0730936420354
+eval loss is 0.0727076753926
+
+ Trainnig Args: Namespace(eval_grad_steps=50, eval_iters=5, inner_grad_steps=1, inner_step_size=0.02, iterations=2000, log='./logs/maml_ik_log.txt', mode=None, n_shot=200, outer_step_size=0.001, seed=1)
+MAML/Training/Loss/0.386328589916 0
+MAML/Training/Loss/0.335964480839 100
+MAML/Training/Loss/0.293014242785 200
+MAML/Training/Loss/0.261184756334 300
+MAML/Training/Loss/0.236219053963 400
+MAML/Training/Loss/0.216617472056 500
+MAML/Training/Loss/0.200989799861 600
+MAML/Training/Loss/0.188609815012 700
+MAML/Training/Loss/0.178338256 800
+MAML/Training/Loss/0.169864780996 900
+MAML/Training/Loss/0.162658675354 1000
+MAML/Training/Loss/0.156517750447 1100
+MAML/Training/Loss/0.151247470896 1200
+MAML/Training/Loss/0.146716249532 1300
+MAML/Training/Loss/0.142763689105 1400
+MAML/Training/Loss/0.139293505586 1500
+MAML/Training/Loss/0.136193661185 1600
+MAML/Training/Loss/0.133408424984 1700
+MAML/Training/Loss/0.130975488218 1800
+MAML/Training/Loss/0.128741207339 1900
+eval loss is 0.0757320281801
+eval loss cmp is 0.0727618849809
+eval loss is 0.0732117915546
+eval loss cmp is 0.0731661567168
+eval loss is 0.0730085975056
+eval loss cmp is 0.0726704638631
+
+ Trainnig Args: Namespace(eval_grad_steps=50, eval_iters=5, inner_grad_steps=1, inner_step_size=0.02, iterations=500, log='./logs/maml_ik_log.txt', mode=None, n_shot=50, outer_step_size=0.1, seed=1)
+MAML/Training/Loss/0.40013422966 0
+MAML/Training/Loss/0.0744677500117 100
+MAML/Training/Loss/0.0613097944626 200
+MAML/Training/Loss/0.0549915459292 300
+MAML/Training/Loss/0.0513876339667 400
+
+ Trainnig Args: Namespace(eval_grad_steps=50, eval_iters=5, inner_grad_steps=1, inner_step_size=0.02, iterations=500, log='./logs/maml_ik_log.txt', mode=None, model_name='500ep', n_shot=50, outer_step_size=0.1, seed=1)
+MAML/Training/Loss/0.405750834942 0
+MAML/Training/Loss/0.0757807553405 100
+MAML/Training/Loss/0.0617501840774 200
+MAML/Training/Loss/0.0554856232903 300
