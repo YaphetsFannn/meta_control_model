@@ -14,6 +14,8 @@ import matplotlib.pyplot as plt
 from copy import deepcopy
 import os
 from test_ik_model import read_min_max
+import logging
+
 FLAGS = argparse.ArgumentParser()
 links_len = np.array([-0.69, -20.46,11.68,10.43,10.14,-0.94,-1.68,0.40])
 p_range,q_range = read_min_max("./model_trained/min_max.txt")
@@ -32,7 +34,7 @@ FLAGS.add_argument('--inner_grad_steps', type=int, default=1)
 FLAGS.add_argument('--eval_grad_steps', type=int, default=50)    
 FLAGS.add_argument('--eval_iters', type=int, default=5, 
     help='How many testing samples of k different shots you want to run')
-FLAGS.add_argument('--logdir', type=str, default="runs", 
+FLAGS.add_argument('--log', type=str, default="./logs/maml_ik_log.txt", 
     help="TensorBoard Logging")
 FLAGS.add_argument('--seed', type=int, default=1)
 
@@ -40,6 +42,16 @@ device = ('cuda' if torch.cuda.is_available() else 'cpu')
 
 prediction_range = 5
 # x_all = np.linspace(-prediction_range, prediction_range, num = 50)
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(message)s"
+)
+logger = logging.getLogger(__name__)
+logger.setLevel(level=logging.INFO)
+handler = logging.FileHandler("./logs/maml_ik_log.txt",'a',delay=False)
+handler.setFormatter(fmt=logging.Formatter("%(message)s"))
+logger.addHandler(handler)
 
 def load_joint():
     datas = []
@@ -57,7 +69,7 @@ def load_joint():
     return joint_all,joint_all_raw
 
 joint_all, joint_all_raw = load_joint()
-print("joint shape ",joint_all.shape)
+# print("joint shape ",joint_all.shape)
 
 def fk_func(joint_alls,links_len_rand):
     robot = get_Robot_rand(links_len_rand)
@@ -66,9 +78,9 @@ def fk_func(joint_alls,links_len_rand):
     joint_of_task = joint_alls[random_index]
     positions = np.array([robot.cal_fk(joint) for joint in joint_of_task])
     positions_init = np.array([robot_init.cal_fk(joint) for joint in joint_of_task])
-    print("distance between rand and init:",cal_dis(positions[-1],positions_init[-1]))
+    # print("distance between rand and init:",cal_dis(positions[-1],positions_init[-1]))
     positions = np.array([(position_ - p_range[0])/p_range[1] for position_ in positions])
-    print("positions.shape ",positions.shape)
+    # print("positions.shape ",positions.shape)
     return joint_of_task, positions
     
 def generate(func,joint_alls):
@@ -85,7 +97,7 @@ def generate(func,joint_alls):
     rand_delta.append(np.random.uniform(low = -0.5, high = 0.5))
     rand_delta = np.array(rand_delta)
     rand_link = links_len + rand_delta
-    print("rand link",rand_link)
+    # print("rand link",rand_link)
     joint_of_task, pos_of_task = func(joint_alls, rand_link)
     return joint_of_task, pos_of_task
 
@@ -96,7 +108,7 @@ def select_points(joints,position, k):
 
 def plot_tensorboard(y_eval, pred, k, n , learner, wave_name='SinWave'):
     for j in range(len(y_eval)):
-        print('Test_Run_{}/{}/{}/{}_points_sampled'.format(n,
+        logger.info('Test_Run_{}/{}/{}/{}_points_sampled'.format(n,
                 learner,wave_name,str(k)), 
             'Original Function', y_eval[j], 'Pretrained', pred['pred'][0][j][0], 
                 'Gradient_Step_{}'.format(len(pred['pred'])-1), pred['pred'][-1][j][0], j)  
@@ -115,7 +127,7 @@ class Meta_Learning:
             # generate new tasks
             joint_of_task, pos_of_task = generate(func,joint_all)
             joint_test,pos_test = select_points(joint_of_task, pos_of_task, k)
-            print("joint_test shape",np.array(joint_test).shape)
+            # logger.info("joint_test shape",np.array(joint_test).shape)
             meta_params = {}
             for task in range(tasks):
                 # sample for meta-update
@@ -138,7 +150,7 @@ class Meta_Learning:
             learning_rate = outer_step_size * (1 - iteration/iterations)
             self.model.load_state_dict({name: init_weights[name] - 
                 learning_rate/tasks * meta_params[name] for name in init_weights})
-            print('MAML/Training/Loss/', loss/batches, iteration)
+            logger.info("MAML/Training/Loss/{} {}".format(loss/batches, iteration))
             # if(iteration % 1000 == 0):
             #     pred = self.predict(position_all[:,None])
             #     for i in range(len(position_all)):
@@ -190,7 +202,7 @@ class Meta_Learning:
                 param.data -= inner_step_size * param.grad.data
             pred.append(self.predict(pos_all[:, None]))
         loss = np.power(pred[-1] - y_all,2).mean()
-        print("loss is ",loss)
+        logger.info("eval loss is {}".format(loss))
         self.model.load_state_dict(meta_weights)
         return {"pred": pred, "sampled_points":(x_p, y_p)}
 
@@ -216,7 +228,8 @@ def main():
     args, unparsed = FLAGS.parse_known_args()
     if len(unparsed) != 0:
         raise NameError("Argument {} not recognized".format(unparsed))
-
+    logger.info("\n Trainnig Args: {}".format(args))
+    
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
     
