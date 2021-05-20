@@ -126,12 +126,12 @@ class FK():
         T = []
         for DH_ in DH:
             a_i, alpha_i, d_i, thea_i = DH_[0], DH_[1], DH_[2], DH_[3]
-            T_ = [
+            T_ = np.array([
                 [cos(thea_i), -sin(thea_i), 0 , a_i],
                 [sin(thea_i) * cos(alpha_i), cos(thea_i) * cos(alpha_i), - sin(alpha_i),-sin(alpha_i)*d_i],
                 [sin(thea_i) * sin(alpha_i), cos(thea_i) * sin(alpha_i), cos(alpha_i),   cos(alpha_i)*d_i],
                 [0,0,0,1]
-            ]
+            ])
             T.append(T_)
         # T = [self.rotate('z', thea_i).dot(self.trans('z', d_i)).dot(self.trans('x', l_i)).dot(self.rotate('x', a_i))
         #     for thea_i, d_i, l_i, a_i in DH]
@@ -183,6 +183,24 @@ def get_Robot():
             Robot_.dy = links_len[6]
             Robot_.dz = links_len[7]
     return Robot_
+
+def get_Robot_rand(links_len):
+    # print("read line :")
+    # print(line)
+    links_len = [round(float(num),2) for num in links_len]
+    DH_ = np.array([
+        [0,     -pi/2,      -pi/2,   -pi/2,     pi/2,   pi/2,        pi/2],      # alpha
+        [0,     links_len[0],          0,      0,         0,      0,      links_len[1]],      # a
+        [links_len[2],     0,      links_len[3],      0,      links_len[4],      0,           0],      # d
+        [0,     np.pi/2,        0,      0,         0,  -pi/2,           0],      # theta
+    ])
+    Robot_ = FK(DH_)  
+    if len(links_len) == 8:
+        Robot_.dx = links_len[5]
+        Robot_.dy = links_len[6]
+        Robot_.dz = links_len[7]
+    return Robot_
+
 
 def load_data(file, is_fk = True, test_data_scale = 0.8):
     with open(file,"r") as rf:

@@ -22,20 +22,20 @@ config = [
     ('relu', [True]),
     # ('bn', [64]),
 
-    ('linear', [64, 64]),
-    ('relu', [True]),
-    # ('bn', [128]),
+    # ('linear', [64, 64]),
+    # ('relu', [True]),
+    # # ('bn', [128]),
 
-    # # ('linear', [256, 128]),
-    # # ('relu', [True]),
-    # # # ('bn', [128]),
+    # # # ('linear', [256, 128]),
+    # # # ('relu', [True]),
+    # # # # ('bn', [128]),
 
-    ('linear', [64, 32]),
-    ('relu', [True]),
+    # ('linear', [64, 32]),
+    # ('relu', [True]),
     # # ('bn', [32]),
     # ('linear', [32, 32]),
     # ('relu', [True]),
-    ('linear', [32, 6]),
+    ('linear', [64, 6]),
     # ('sigmoid', [True])
 ]
 p_range, q_range = [],[]

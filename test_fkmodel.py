@@ -67,27 +67,27 @@ def main(args):
     # plt.show()
     
     # test delta distance
-    max_dis = 3
-    dis_delta_p = []
-    angle_delta_p = []
-    for idx,p1 in enumerate(pos_real):
-        for idx2,p2 in enumerate(pos_real):
-            if idx == idx2:
-                continue
-            dis_real = cal_dis(p1,p2)
-            if dis_real > max_dis:
-                continue
-            delat_p_real = p2 - p1
-            delat_p_cal = pos_pre[idx2] - pos_pre[idx]
-            # print(delat_p_cal,delat_p_real,cal_angle(delat_p_cal,delat_p_real))
-            # print(cal_dis(delat_p_cal,delat_p_real))
-            dis_delta_p.append(cal_dis(delat_p_cal,delat_p_real))
-            angle_delta_p.append(cal_angle(delat_p_cal,delat_p_real))
-    dis_delta_p = np.array(dis_delta_p)
-    angle_delta_p = np.array(angle_delta_p)
-    print("shape is ",dis_delta_p.shape,angle_delta_p.shape)
-    print("mean dis:",dis_delta_p.mean())
-    print("mean angle:",np.nanmean(angle_delta_p))
+    # max_dis = 3
+    # dis_delta_p = []
+    # angle_delta_p = []
+    # for idx,p1 in enumerate(pos_real):
+    #     for idx2,p2 in enumerate(pos_real):
+    #         if idx == idx2:
+    #             continue
+    #         dis_real = cal_dis(p1,p2)
+    #         if dis_real > max_dis:
+    #             continue
+    #         delat_p_real = p2 - p1
+    #         delat_p_cal = pos_pre[idx2] - pos_pre[idx]
+    #         # print(delat_p_cal,delat_p_real,cal_angle(delat_p_cal,delat_p_real))
+    #         # print(cal_dis(delat_p_cal,delat_p_real))
+    #         dis_delta_p.append(cal_dis(delat_p_cal,delat_p_real))
+    #         angle_delta_p.append(cal_angle(delat_p_cal,delat_p_real))
+    # dis_delta_p = np.array(dis_delta_p)
+    # angle_delta_p = np.array(angle_delta_p)
+    # print("shape is ",dis_delta_p.shape,angle_delta_p.shape)
+    # print("mean dis:",dis_delta_p.mean())
+    # print("mean angle:",np.nanmean(angle_delta_p))
 
 
 if __name__ == '__main__':

@@ -22,7 +22,7 @@ from std_msgs.msg import Header
 from realsense_camera.msg import position
 import realsense_camera.msg
 from train_delta_ik_hr6 import DIM
-from save_datas import get_joint_angle
+# from save_datas import get_joint_angle
 from dynamixel_msgs.msg import MotorStateList
 
 R2D = 180/np.pi

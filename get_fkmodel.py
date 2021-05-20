@@ -20,7 +20,6 @@ import argparse
 from random import shuffle
 import sympy as sym
 from sympy import symbols as sb
-from sympy import *
 from numpy import eye,dot,mat
 from numpy.linalg import inv
 
@@ -167,8 +166,8 @@ def gradient_decent(x,y,coeff_init,lr_start,epoch,decay=0):
             for k in range(n):
                 coeff_gradient[k] += (1.0/m) * x[j][k] * gradient(x[j],y[j],coeff)
         for k in range(n):
-            if k == 0:
-                continue
+            # if k == 0:
+            #     continue
             coeff[k] = coeff[k] - lr*coeff_gradient[k]
         losses.append(loss(x,y,coeff).mean())
     return coeff,losses
