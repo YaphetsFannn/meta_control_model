@@ -90,7 +90,7 @@ def generate(func,joint_alls):
     return joint_of_task, pos_of_task
 
 def select_points(joints,position, k):
-    random_points = np.random.choice(np.arange(len(joint_all)), k,replace=False)[:, None]
+    random_points = np.random.choice(np.arange(len(joints)), k,replace=False)[:, None]
     # print(random_points)
     return joints[random_points], position[random_points] 
 
@@ -136,7 +136,7 @@ class Meta_Learning:
                 batches += 1
                 self.model.load_state_dict(init_weights)
             learning_rate = outer_step_size * (1 - iteration/iterations)
-            self.model.load_state_dlossict({name: init_weights[name] - 
+            self.model.load_state_dict({name: init_weights[name] - 
                 learning_rate/tasks * meta_params[name] for name in init_weights})
             print('MAML/Training/Loss/', loss/batches, iteration)
             # if(iteration % 1000 == 0):
@@ -144,32 +144,32 @@ class Meta_Learning:
             #     for i in range(len(position_all)):
             #         print('pretrain_wave_{}'.format(iteration/1000), pred[i][0],i)  
 
-    def train_reptile(self, func, k, iterations, outer_step_size, inner_step_size, 
-        inner_gradient_steps):
-        loss = 0
-        batches=0
-        for iteration in range(iterations):
-            init_weights = deepcopy(self.model.state_dict())
-            position_all , _ = generate(func,joint_all)
-            for j in range(inner_gradient_steps):
-                random_order = np.random.permutation(len(x_all))
-                for start in range(0,len(x_all), k):
-                    indicies = random_order[start: start + k][:, None]
-                    loss_base = self.train_loss(x_all[indicies], y_all[indicies])
-                    loss_base.backward()
-                    for param in self.model.parameters():
-                        param.data -= inner_step_size * param.grad.data
-                    loss += loss_base.cpu().data.numpy()
-                    batches += 1
-            learning_rate = outer_step_size * (1 - iteration/iterations)
-            curr_weights = self.model.state_dict()
-            self.model.load_state_dict({name: (init_weights[name] + learning_rate * 
-                (curr_weights[name] - init_weights[name])) for name in curr_weights})
-            # self.writer.add_scalar('Reptile/Training/Loss/', loss/batches, iteration)
-            if(iteration % 1000 == 0):
-                pred = self.predict(x_all[:,None])
-                for i in range(len(x_all)):
-                        print('pretrain_wave_{}'.format(iteration/1000), pred[i][0],i)
+    # def train_reptile(self, func, k, iterations, outer_step_size, inner_step_size, 
+    #     inner_gradient_steps):
+    #     loss = 0
+    #     batches=0
+    #     for iteration in range(iterations):
+    #         init_weights = deepcopy(self.model.state_dict())
+    #         position_all , _ = generate(func,joint_all)
+    #         for j in range(inner_gradient_steps):
+    #             random_order = np.random.permutation(len(x_all))
+    #             for start in range(0,len(x_all), k):
+    #                 indicies = random_order[start: start + k][:, None]
+    #                 loss_base = self.train_loss(x_all[indicies], y_all[indicies])
+    #                 loss_base.backward()
+    #                 for param in self.model.parameters():
+    #                     param.data -= inner_step_size * param.grad.data
+    #                 loss += loss_base.cpu().data.numpy()
+    #                 batches += 1
+    #         learning_rate = outer_step_size * (1 - iteration/iterations)
+    #         curr_weights = self.model.state_dict()
+    #         self.model.load_state_dict({name: (init_weights[name] + learning_rate * 
+    #             (curr_weights[name] - init_weights[name])) for name in curr_weights})
+    #         # self.writer.add_scalar('Reptile/Training/Loss/', loss/batches, iteration)
+    #         if(iteration % 1000 == 0):
+    #             pred = self.predict(x_all[:,None])
+    #             for i in range(len(x_all)):
+    #                     print('pretrain_wave_{}'.format(iteration/1000), pred[i][0],i)
 
     def train_loss(self, x, y):
         x = torch.tensor(x, dtype=torch.float32, device = device)
@@ -234,14 +234,10 @@ def main():
     # model = Meta_Wave(64)
     model = ann_model(train_ik_hr6.config)
     meta = Meta_Learning(model)
-    if(args.mode == 'maml'):
-        meta.train_maml(funcs, k, iterations, args.outer_step_size, args.inner_step_size,
-            args.inner_grad_steps)
-        learner = 'maml'
-    else:
-        meta.train_reptile(funcs ,k, iterations, args.outer_step_size, args.inner_step_size,
-            args.inner_grad_steps)
-        learner = 'reptile'
+    meta.train_maml(funcs, k, iterations, args.outer_step_size, args.inner_step_size,
+        args.inner_grad_steps)
+    learner = 'maml'
+
 
     # eval
     eval_iters = args.eval_iters
