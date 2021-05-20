@@ -46,8 +46,8 @@ FLAGS.add_argument('--n_shot', type=int, default=50,
 #     help = "Base function you want to use for traning")
 # FLAGS.add_argument('--batch_size', type=int, help='update steps for finetunning', default=40)
 FLAGS.add_argument('--iterations', type=int, default=20000)
-FLAGS.add_argument('--outer_step_size', type=float, default=0.1)
-FLAGS.add_argument('--inner_step_size', type=float, default=0.02)
+FLAGS.add_argument('--outer_step_size', type=float, default=0.005)
+FLAGS.add_argument('--inner_step_size', type=float, default=0.1)
 FLAGS.add_argument('--inner_grad_steps', type=int, default=1)
 FLAGS.add_argument('--eval_grad_steps', type=int, default=50)    
 FLAGS.add_argument('--eval_iters', type=int, default=5, 
@@ -133,9 +133,9 @@ def plot_tensorboard(y_eval, pred, k, n , learner, wave_name='SinWave'):
                 'Gradient_Step_{}'.format(len(pred['pred'])-1), pred['pred'][-1][j][0], j)  
 
 class Meta_Learning:
-    def __init__(self, model,model_name="test"):
+    def __init__(self, model,model_init,model_name="test"):
         self.model = model.to(device)
-        self.init_model = model.to(device)
+        self.init_model = model_init.to(device)
         self.train_losses = []
         self.eval_losses = []
         self.model_name = model_name
@@ -217,6 +217,14 @@ class Meta_Learning:
         loss = (out - y).pow(2).mean()
         return loss
 
+    def train_loss_cmp(self, x, y):
+        x = torch.tensor(x, dtype=torch.float32, device = device)
+        y = torch.tensor(y, dtype=torch.float32, device = device)
+        self.init_model.zero_grad()
+        out = self.init_model(x)
+        loss = (out - y).pow(2).mean()
+        return loss
+
     def eval(self, joint_eval, pos_eval, k, gradient_steps=40, inner_step_size=0.02):
         joint_p,pos_p = select_points(joint_eval, pos_eval, k)
         pred = [self.predict(pos_p[:,None])]
@@ -229,7 +237,7 @@ class Meta_Learning:
             for param in self.model.parameters():
                 param.data -= inner_step_size * param.grad.data
             pred.append(self.predict(pos_eval[:, None]))
-        loss = np.power(pred[-1] - joint_all,2).mean()
+        loss = np.power(pred[-1] - joint_eval,2).mean()
         logger.info("eval loss is {}".format(loss))
         self.write_to("./logs/loss_eval_"+str(k)+"_"+self.model_name+".txt",self.eval_losses)
         self.model.load_state_dict(meta_weights)
@@ -237,17 +245,17 @@ class Meta_Learning:
 
     def eval_comp(self, joint_eval, pos_eval, k, gradient_steps=40, inner_step_size=0.02):
         joint_p,pos_p = select_points(joint_eval, pos_eval, k)
-        pred = [self.predict(pos_p[:,None])]
+        pred = [self.predict_cmp(pos_p[:,None])]
         init_weights = deepcopy(self.init_model.state_dict())
         self.eval_losses=[]
         for i in range(gradient_steps):
-            loss_base = self.train_loss(pos_p,joint_p)
+            loss_base = self.train_loss_cmp(pos_p,joint_p)
             self.eval_losses.append(loss_base.cpu().data.numpy())
             loss_base.backward()
-            for param in self.model.parameters():
+            for param in self.init_model.parameters():
                 param.data -= inner_step_size * param.grad.data
-            pred.append(self.predict(pos_eval[:, None]))
-        loss = np.power(pred[-1] - joint_all,2).mean()
+            pred.append(self.predict_cmp(pos_eval[:, None]))
+        loss = np.power(pred[-1] - joint_eval,2).mean()
         logger.info("eval loss cmp is {}".format(loss))
         self.write_to("./logs/loss_eval_cmp_"+str(k)+"_"+self.model_name+".txt",self.eval_losses)
         self.init_model.load_state_dict(init_weights)
@@ -268,6 +276,10 @@ class Meta_Learning:
     def predict(self, x):
         x = torch.tensor(x, dtype=torch.float32, device=device)
         return self.model(x).cpu().data.numpy()
+
+    def predict_cmp(self, x):
+        x = torch.tensor(x, dtype=torch.float32, device=device)
+        return self.init_model(x).cpu().data.numpy()
 
 class Meta_Wave(nn.Module):
     def __init__(self, units):
@@ -305,20 +317,19 @@ def main():
 
     # model = Meta_Wave(64)
     model = ann_model(train_ik_hr6.config)
+    model_init = ann_model(train_ik_hr6.config)
     model_name = args.model_name
-    meta = Meta_Learning(model,model_name)
+    meta = Meta_Learning(model,model_init,model_name)
     meta.train_maml(funcs, shots, iterations, args.outer_step_size, args.inner_step_size,
         args.inner_grad_steps)
     learner = 'maml'
-
-
     # eval
     eval_iters = args.eval_iters
     gradient_steps = args.eval_grad_steps
-    inner_step_size = args.inner_step_size
+    inner_step_size = 0.0005
 
     joint_eval, pos_eval = generate(fk_func,joint_all,data_nums=1000)
-    for sample in [50,200,500]:
+    for sample in [10,50,200]:
         meta.eval(joint_eval, pos_eval, sample, gradient_steps, inner_step_size)
         meta.eval_comp(joint_eval, pos_eval, sample, gradient_steps, inner_step_size)
         # plot_tensorboard(pos_eval, pred, sample, n, learner, wave_name=name)
