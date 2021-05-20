@@ -13,7 +13,7 @@ from fk_models import *
 from models import *
 # import pandas as pd
 import matplotlib as mpl
-mpl.use('TkAgg')
+# mpl.use('TkAgg')
 import matplotlib.pyplot as plt
 
 #整体模型架构
@@ -22,8 +22,8 @@ config = [
     ('relu', [True]),
     # ('bn', [64]),
 
-    # ('linear', [64, 64]),
-    # ('relu', [True]),
+    ('linear', [64, 64]),
+    ('sigmoid', [True]),
     # # ('bn', [128]),
 
     # # # ('linear', [256, 128]),
@@ -38,7 +38,26 @@ config = [
     ('linear', [64, 6]),
     # ('sigmoid', [True])
 ]
-p_range, q_range = [],[]
+def read_min_max(path):
+    q_range = []
+    p_range = []
+    with open(path,"r") as rf:
+        line = rf.readline()
+        line = line.strip().split(",")
+        line = [float(num) for num in line]
+        q_range.append(line[0:6])
+        q_range.append(line[6:])
+        line = rf.readline()
+        line = line.strip().split(",")
+        line = [float(num) for num in line]
+        p_range.append(line[0:3])
+        p_range.append(line[3:])
+    p_range = np.array(p_range)
+    q_range = np.array(q_range)
+    return p_range,q_range
+
+p_range, q_range = read_min_max("./model_trained/min_max.txt")
+
 def main(args):
     global config,p_range, q_range
     torch.manual_seed(222)
@@ -51,9 +70,9 @@ def main(args):
 
     if not is_delta_model:
         if generate_:
-            inputs, outputs, test_inputs, test_outputs, p_range, q_range = generate_data(1000, is_fk=args.is_fk)
+            inputs, outputs, test_inputs, test_outputs, _, _ = generate_data(1000, is_fk=args.is_fk)
         else:
-            inputs, outputs, test_inputs, test_outputs, p_range, q_range = load_data("./data/"+args.file+".txt", is_fk=args.is_fk)
+            inputs, outputs, test_inputs, test_outputs, _, _ = load_data("./data/"+args.file+".txt", is_fk=args.is_fk,test_data_scale=0.2)
     else:
         q_0 = np.array([1.33,1.02,0.25,0.29,0.3,0.2])
         pku_hr6 = get_Robot()
@@ -68,15 +87,17 @@ def main(args):
     print("inputs.shape, outputs.shape ", inputs.shape, outputs.shape)
     print("inputs[0]: ", inputs[0])
     print("outputs[0]: ", outputs[0])
-    print("p_range: ", p_range)
-    print("q_range: ", q_range)
+    # print("p_range: ", p_range)
+    # print("q_range: ", q_range)
     input_size = inputs.shape[1]
     hidden_size = args.hidden_size
     hidden_layer = args.hidden_layer
     output_size = outputs.shape[1]
 
     ik_nn = ann_model(config)
-
+    if args.l:
+        print("load models!")
+        ik_nn.load_state_dict(torch.load("./model_trained/meta_ik.pkl"))
     #损失函数
     cost = torch.nn.MSELoss(reduction='mean')
     #参数
@@ -101,27 +122,7 @@ def main(args):
                 print("************************* epoch ",i,"*************************")
                 print(i, " training loss ", np.mean(batch_loss), " test loss ", test_loss.data.numpy())
                 if is_delta_model:
-                    rands = np.random.choice(prediction_.data.numpy().shape[0])
-                    joint_1 = [delta_q_i * delta_q_range[1] + delta_q_range[0] +\
-                                 q_0 for delta_q_i in prediction_.data.numpy()]
-                    p_pre = np.array([pku_hr6.cal_fk(joint_i) for joint_i in joint_1])
-                    p_real = [  p_0 + inputs_[0:3] * delta_p_range[1] + delta_p_range[0] \
-                                for inputs_ in test_x.data.numpy()]
-
-                    dist_0 = []
-                    dist_1 = []
-                    for i in range(0,p_pre.shape[0]):
-                        tmp = np.array(p_pre[i] - p_real[i], dtype=np.float64)
-                        tmp2 = np.array(p_0 - p_real[i], dtype=np.float64)
-                        dist_0.append(np.linalg.norm(tmp))
-                        dist_1.append(np.linalg.norm(tmp2))
-                        # print(dist_1[-1])
-                    joint_1 = [delta_q_i * delta_q_range[1] + delta_q_range[0] +\
-                                 q_0 for delta_q_i in prediction_.data.numpy()]
-                    dis_train.append(dist_0)
-                    dist_0 = np.mean(np.array(dist_0))
-                    dist_1 = np.mean(np.array(dist_1))
-                    print(" mean distance ", dist_0, " distance_2 ", dist_1)
+                    continue
                 else:
                     if args.d:
                         test_x = torch.tensor(test_set[0], dtype = torch.float, requires_grad = False)
@@ -207,26 +208,28 @@ def main(args):
         plt.xlabel('epoch')
         plt.ylabel('mse loss')
         plt.show()
-    # PATH = "./model_trained/net_param.pkl"
-    # torch.save(ik_nn.state_dict(), PATH)
-    with open("./model_trained/min_max.txt","w") as wf:
-        for min_q in q_range[0]:
-            wf.write(str(min_q)+",")
-        for i in range(6):
-            wf.write(str(q_range[1][i]))
-            if i != 5:
-                wf.write(",")
-            else:
-                wf.write("\n")
-        for min_p in p_range[0]:
-            wf.write(str(min_p)+",")
-        for i in range(3):
-            wf.write(str(p_range[1][i]))
-            if i != 2:
-                wf.write(",")
-            else:
-                wf.write("\n")
-    # torch.save(ik_nn, "./model_trained/net.pkl")
+    if args.s:
+        PATH = "./model_trained/net_param.pkl"
+        torch.save(ik_nn.state_dict(), PATH)
+        torch.save(ik_nn, "./model_trained/net.pkl")
+    # with open("./model_trained/min_max.txt","w") as wf:
+    #     for min_q in q_range[0]:
+    #         wf.write(str(min_q)+",")
+    #     for i in range(6):
+    #         wf.write(str(q_range[1][i]))
+    #         if i != 5:
+    #             wf.write(",")
+    #         else:
+    #             wf.write("\n")
+    #     for min_p in p_range[0]:
+    #         wf.write(str(min_p)+",")
+    #     for i in range(3):
+    #         wf.write(str(p_range[1][i]))
+    #         if i != 2:
+    #             wf.write(",")
+    #         else:
+    #             wf.write("\n")
+    
 
 
 if __name__ == "__main__":
@@ -256,5 +259,9 @@ if __name__ == "__main__":
                                 help='if needs to train a delta_p -> delta_q models', default=False)
     argparser.add_argument('--d', type=bool, \
                                 help='if need draw pic', default=True)
+    argparser.add_argument('--l', type=bool, \
+                            help='if load model', default=False)
+    argparser.add_argument('--s', type=bool, \
+                            help='if load model', default=False)
     args = argparser.parse_args()
     main(args)
