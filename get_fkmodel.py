@@ -31,7 +31,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 # from statsmodels.tsa.arima_model import ARIMA
 from fk_models import FK
-plt.style.use("fivethirtyeight")
+# plt.style.use("fivethirtyeight")
 
 warnings.filterwarnings("ignore")
 
@@ -301,8 +301,8 @@ if __name__ == "__main__":
     print("loss init is:")
     print(loss(x,y,coeff_init).mean())
     print(coeff_init,coeff_grad)
-    getErrorBar(x,y,coeff_grad)
-    getErrorBar(x,y,coeff_init)
+    # getErrorBar(x,y,coeff_grad)
+    # getErrorBar(x,y,coeff_init)
 
     print("\n****************train***************\n")
 

@@ -202,7 +202,51 @@ def get_Robot_rand(links_len):
     return Robot_
 
 
-def load_data(file, is_fk = True, test_data_scale = 0.8):
+# def load_data(file, is_fk = True, test_data_scale = 0.8):
+#     with open(file,"r") as rf:
+#         lines = rf.readlines()
+#         shuffle(lines)
+#         p = []
+#         q = []
+#         for line in lines:
+#             datas = line.strip().split(" ")
+#             p_tmp = np.array([float(x) for x in datas[0:3]])            
+#             p.append(p_tmp)
+#             q.append([float(x)/180 * np.pi for x in datas[3:]])
+#         q = np.array(q)
+#         p = np.array(p)
+#     inputs = p
+#     outputs = q
+#     p_range = [p.min(0), p.max(0) - p.min(0)]
+#     q_range = [q.min(0), q.max(0) - q.min(0)]
+#     inputs = np.array(noramlization(inputs))
+#     outputs = np.array(noramlization(outputs))
+#     test_set = [inputs[int(inputs.shape[0]*test_data_scale):-1], 
+#                 outputs[int(inputs.shape[0]*test_data_scale):-1]]
+#     inputs = inputs[0:int(q.shape[0]*test_data_scale)]
+#     outputs = outputs[0:int(p.shape[0]*test_data_scale)]
+#     return inputs, outputs, test_set[0], test_set[1],p_range,q_range
+
+def read_min_max(path):
+    q_range = []
+    p_range = []
+    with open(path,"r") as rf:
+        line = rf.readline()
+        line = line.strip().split(",")
+        line = [float(num) for num in line]
+        q_range.append(line[0:6])
+        q_range.append(line[6:])
+        line = rf.readline()
+        line = line.strip().split(",")
+        line = [float(num) for num in line]
+        p_range.append(line[0:3])
+        p_range.append(line[3:])
+    p_range = np.array(p_range)
+    q_range = np.array(q_range)
+    return p_range,q_range
+
+def load_data(file, training_nums = 500):
+    # joint q, position p
     with open(file,"r") as rf:
         lines = rf.readlines()
         shuffle(lines)
@@ -215,17 +259,17 @@ def load_data(file, is_fk = True, test_data_scale = 0.8):
             q.append([float(x)/180 * np.pi for x in datas[3:]])
         q = np.array(q)
         p = np.array(p)
-    inputs = p
-    outputs = q
-    p_range = [p.min(0), p.max(0) - p.min(0)]
-    q_range = [q.min(0), q.max(0) - q.min(0)]
-    inputs = np.array(noramlization(inputs))
-    outputs = np.array(noramlization(outputs))
-    test_set = [inputs[int(inputs.shape[0]*test_data_scale):-1], 
-                outputs[int(inputs.shape[0]*test_data_scale):-1]]
-    inputs = inputs[0:int(q.shape[0]*test_data_scale)]
-    outputs = outputs[0:int(p.shape[0]*test_data_scale)]
-    return inputs, outputs, test_set[0], test_set[1],p_range,q_range
+    # p_range = [p.min(0), p.max(0) - p.min(0)]
+    # q_range = [q.min(0), q.max(0) - q.min(0)]
+    p_range, q_range = read_min_max("./model_trained/min_max.txt")
+    p = np.array(noramlization_with_delta_range(p,p_range))
+    q = np.array(noramlization_with_delta_range(q,q_range))
+    # outputs = np.array([[out[0]] for out in outputs])
+    test_set = [p[min(training_nums,len(p) - 1):min(min(training_nums,len(p) - 1)+200,len(p))], 
+                q[min(training_nums,len(q) - 1):min(min(training_nums,len(p) - 1)+200,len(p))]]
+    p = p[0:training_nums]
+    q = q[0:training_nums]
+    return p, q, test_set[0], test_set[1],p_range,q_range
 
 def cal_dis(p_a, p_b):
     ret = 0
@@ -262,7 +306,7 @@ def noramlization(data,has_equle=False):
     """
     minVals = data.min(0)
     maxVals = data.max(0)
-    print("nmlzt: min:", minVals,"max",maxVals)
+    # print("nmlzt: min:", minVals,"max",maxVals)
     ranges = maxVals - minVals
     normData = (data - minVals)/ranges
     return normData
@@ -273,7 +317,7 @@ def noramlization_with_delta_range(data,delta_range):
     """
     minVals = delta_range[0]
     rangeVals = delta_range[1]
-    print("nmlzt_with_delta: min:", minVals,"max",minVals+rangeVals)
+    # print("nmlzt_with_delta: min:", minVals,"max",minVals+rangeVals)
     normData = (data - minVals)/rangeVals
     return normData
 
@@ -301,7 +345,7 @@ def generate_delta_data(q_0,p_0, data_nums = 500, test_data_scale = 0.6, delta_r
     # delta_p = np.hstack((p,delta_p))
     # delta_p = np.hstack((delta_p,q))
     delta_p = np.array(delta_p)
-    print("delta_p.shape",delta_p.shape)
+    # print("delta_p.shape",delta_p.shape)
 
     delta_p_range, delta_q_range = read_range_from_file("./data/delta_min_max.txt")
     # inputs = np.hstack((delta_p,q))

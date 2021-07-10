@@ -16,3 +16,105 @@ eval loss is 0.0724345137849
 eval loss cmp is 0.338994007458
 eval loss is 0.0720597111034
 eval loss cmp is 0.343091220204
+
+ Trainnig Args: Namespace(eval_grad_steps=30, eval_iters=5, inner_grad_steps=20, inner_step_size=0.1, iterations=10, log='./logs/maml_ik_log.txt', mode=None, model_name='test', n_shot=20, outer_step_size=0.005, seed=1)
+MAML/Task/test/Loss/ 0.0838805362582 0
+MAML/Training/Loss/ 0.0749953567982 0
+eval loss is 0.153194637772
+eval loss cmp is 0.139926738242
+eval loss is 0.125904743111
+eval loss cmp is 0.129897234297
+eval loss is 0.120828593306
+eval loss cmp is 0.131819601244
+
+ Trainnig Args: Namespace(eval_grad_steps=30, eval_iters=5, inner_grad_steps=20, inner_step_size=0.1, iterations=1000, log='./logs/maml_ik_log.txt', mode=None, model_name='test', n_shot=20, outer_step_size=0.005, seed=1)
+MAML/Task/test/Loss/ 0.0814007148147 0
+MAML/Training/Loss/ 0.07710666731 0
+
+ Trainnig Args: Namespace(eval_grad_steps=30, eval_iters=5, inner_grad_steps=20, inner_step_size=0.1, iterations=1000, log='./logs/maml_ik_log.txt', mode=None, model_name='test', n_shot=20, outer_step_size=0.005, seed=1)
+MAML/Task/test/Loss/ 0.0806057751179 0
+MAML/Training/Loss/ 0.0797126293182 0
+
+ Trainnig Args: Namespace(eval_grad_steps=30, eval_iters=5, inner_grad_steps=20, inner_step_size=0.1, iterations=1000, log='./logs/maml_ik_log.txt', mode=None, model_name='test', n_shot=20, outer_step_size=0.005, seed=1)
+MAML/Task/test/Loss/ 0.0836805924773 0
+MAML/Training/Loss/ 0.0791934967041 0
+MAML/Task/test/Loss/ 0.0755886957049 100
+MAML/Training/Loss/ 0.0744796799035 100
+MAML/Task/test/Loss/ 0.0594321414828 200
+MAML/Training/Loss/ 0.0740619618168 200
+MAML/Task/test/Loss/ 0.0728120729327 300
+MAML/Training/Loss/ 0.0737599323556 300
+MAML/Task/test/Loss/ 0.0744206085801 400
+MAML/Training/Loss/ 0.0733881245713 400
+MAML/Task/test/Loss/ 0.0707991272211 500
+MAML/Training/Loss/ 0.0732407950861 500
+MAML/Task/test/Loss/ 0.0933929011226 600
+MAML/Training/Loss/ 0.0730936539302 600
+MAML/Task/test/Loss/ 0.0516352131963 700
+MAML/Training/Loss/ 0.0729074153406 700
+MAML/Task/test/Loss/ 0.0631723403931 800
+MAML/Training/Loss/ 0.0726627850838 800
+MAML/Task/test/Loss/ 0.0755911767483 900
+MAML/Training/Loss/ 0.0724810738327 900
+eval loss is 0.113444929561
+eval loss cmp is 0.122516197373
+eval loss is 0.11519176326
+eval loss cmp is 0.119749118288
+eval loss is 0.108443992926
+eval loss cmp is 0.120142394592
+
+ Trainnig Args: Namespace(eval_grad_steps=30, eval_iters=5, inner_grad_steps=20, inner_step_size=0.01, iterations=1000, log='./logs/maml_ik_log.txt', mode=None, model_name='test', n_shot=20, outer_step_size=0.005, seed=1)
+MAML/Task/test/Loss/ 0.102068014443 0
+MAML/Training/Loss/ 0.101993870735 0
+MAML/Task/test/Loss/ 0.0868472531438 100
+MAML/Training/Loss/ 0.097044642727 100
+MAML/Task/test/Loss/ 0.0917156711221 200
+MAML/Training/Loss/ 0.0944453314169 200
+MAML/Task/test/Loss/ 0.0857490673661 300
+MAML/Training/Loss/ 0.0923921621272 300
+MAML/Task/test/Loss/ 0.0891669914126 400
+MAML/Training/Loss/ 0.0906508413949 400
+MAML/Task/test/Loss/ 0.0809155777097 500
+MAML/Training/Loss/ 0.0892973608094 500
+MAML/Task/test/Loss/ 0.101207360625 600
+MAML/Training/Loss/ 0.0882046314833 600
+MAML/Task/test/Loss/ 0.0647180005908 700
+MAML/Training/Loss/ 0.0872440287171 700
+MAML/Task/test/Loss/ 0.0781555101275 800
+MAML/Training/Loss/ 0.0863951277653 800
+MAML/Task/test/Loss/ 0.0865441337228 900
+MAML/Training/Loss/ 0.0857022404017 900
+eval loss is 0.102772780148
+eval loss cmp is 0.124102516277
+eval loss is 0.103404099579
+eval loss cmp is 0.120002783787
+eval loss is 0.100285419232
+eval loss cmp is 0.121498854585
+
+ Trainnig Args: Namespace(eval_grad_steps=30, eval_iters=5, inner_grad_steps=20, inner_step_size=0.01, iterations=1000, log='./logs/maml_ik_log.txt', mode=None, model_name='test', n_shot=20, outer_step_size=0.005, seed=1)
+MAML/Task/test/Loss/ 0.0289454702288 0
+MAML/Training/Loss/ 0.0280118830502 0
+MAML/Task/test/Loss/ 0.0275699589401 100
+MAML/Training/Loss/ 0.0260366914702 100
+MAML/Task/test/Loss/ 0.0241688750684 200
+MAML/Training/Loss/ 0.0253547552028 200
+MAML/Task/test/Loss/ 0.0200694147497 300
+MAML/Training/Loss/ 0.0248901133472 300
+MAML/Task/test/Loss/ 0.0263038557023 400
+MAML/Training/Loss/ 0.0245405845901 400
+MAML/Task/test/Loss/ 0.025065485388 500
+MAML/Training/Loss/ 0.024262427536 500
+MAML/Task/test/Loss/ 0.0273939631879 600
+MAML/Training/Loss/ 0.0240526118689 600
+MAML/Task/test/Loss/ 0.0201780796051 700
+MAML/Training/Loss/ 0.0238906434273 700
+MAML/Task/test/Loss/ 0.0221379883587 800
+MAML/Training/Loss/ 0.0236959516809 800
+MAML/Task/test/Loss/ 0.0199638195336 900
+MAML/Training/Loss/ 0.0235485059285 900
+eval loss is 0.0255993178889
+eval loss cmp is 0.0368395333916
+eval loss is 0.0265033788647
+eval loss cmp is 0.0341599770778
+eval loss is 0.0251549756746
+eval loss cmp is 0.0344717117207

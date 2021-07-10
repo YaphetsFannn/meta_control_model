@@ -77,3 +77,245 @@
 2021-04-13 20:51:08 INFO: UVC device detected with VID = 0x8086 PID = 0xaa5
 2021-04-13 20:51:08 INFO: USB Port number =2-2
 2021-04-13 20:51:08 INFO: Connecting to Intel RealSense SR300
+2021-06-11 00:02:58 INFO: UVC device detected with VID = 0x8086 PID = 0xaa5
+2021-06-11 00:02:58 INFO: USB Port number =2-2
+2021-06-11 00:02:58 INFO: Connecting to Intel RealSense SR300
+2021-06-11 00:02:58 INFO: Subdevice 0 produced empty frame
+2021-06-11 00:02:58 INFO: Subdevice 0 produced empty frame
+2021-06-11 00:02:58 INFO: Subdevice 0 produced empty frame
+2021-06-11 00:02:58 INFO: Subdevice 0 produced empty frame
+2021-06-11 00:02:58 INFO: Subdevice 1 produced empty frame
+2021-06-11 00:02:58 INFO: Subdevice 1 produced empty frame
+2021-06-11 00:02:58 INFO: Subdevice 1 produced empty frame
+2021-06-11 00:02:58 INFO: Subdevice 1 produced empty frame
+2021-06-11 00:06:59 INFO: UVC device detected with VID = 0x8086 PID = 0xaa5
+2021-06-11 00:06:59 INFO: USB Port number =2-2
+2021-06-11 00:06:59 INFO: Connecting to Intel RealSense SR300
+2021-06-11 00:06:59 INFO: Subdevice 0 produced empty frame
+2021-06-11 00:06:59 INFO: Subdevice 0 produced empty frame
+2021-06-11 00:06:59 INFO: Subdevice 0 produced empty frame
+2021-06-11 00:06:59 INFO: Subdevice 0 produced empty frame
+2021-06-11 00:06:59 INFO: Subdevice 1 produced empty frame
+2021-06-11 00:06:59 INFO: Subdevice 1 produced empty frame
+2021-06-11 00:06:59 INFO: Subdevice 1 produced empty frame
+2021-06-11 00:06:59 INFO: Subdevice 1 produced empty frame
+2021-06-11 00:07:57 INFO: UVC device detected with VID = 0x8086 PID = 0xaa5
+2021-06-11 00:07:57 INFO: USB Port number =2-2
+2021-06-11 00:07:57 INFO: Connecting to Intel RealSense SR300
+2021-06-11 00:07:58 INFO: Subdevice 0 produced empty frame
+2021-06-11 00:07:58 INFO: Subdevice 0 produced empty frame
+2021-06-11 00:07:58 INFO: Subdevice 0 produced empty frame
+2021-06-11 00:07:58 INFO: Subdevice 0 produced empty frame
+2021-06-11 00:07:58 INFO: Subdevice 1 produced empty frame
+2021-06-11 00:07:58 INFO: Subdevice 1 produced empty frame
+2021-06-11 00:07:58 INFO: Subdevice 1 produced empty frame
+2021-06-11 00:07:58 INFO: Subdevice 1 produced empty frame
+2021-06-11 00:10:26 INFO: UVC device detected with VID = 0x8086 PID = 0xaa5
+2021-06-11 00:10:26 INFO: USB Port number =2-2
+2021-06-11 00:10:26 INFO: Connecting to Intel RealSense SR300
+2021-06-11 00:10:26 INFO: Subdevice 0 produced empty frame
+2021-06-11 00:10:26 INFO: Subdevice 0 produced empty frame
+2021-06-11 00:10:26 INFO: Subdevice 0 produced empty frame
+2021-06-11 00:10:26 INFO: Subdevice 0 produced empty frame
+2021-06-11 00:10:26 INFO: Subdevice 1 produced empty frame
+2021-06-11 00:10:26 INFO: Subdevice 1 produced empty frame
+2021-06-11 00:10:26 INFO: Subdevice 1 produced empty frame
+2021-06-11 00:10:26 INFO: Subdevice 1 produced empty frame
+2021-06-11 00:10:48 INFO: UVC device detected with VID = 0x8086 PID = 0xaa5
+2021-06-11 00:10:48 INFO: USB Port number =2-2
+2021-06-11 00:10:48 INFO: Connecting to Intel RealSense SR300
+2021-06-11 00:10:48 INFO: Subdevice 0 produced empty frame
+2021-06-11 00:10:48 INFO: Subdevice 0 produced empty frame
+2021-06-11 00:10:48 INFO: Subdevice 0 produced empty frame
+2021-06-11 00:10:48 INFO: Subdevice 0 produced empty frame
+2021-06-11 00:10:48 INFO: Subdevice 1 produced empty frame
+2021-06-11 00:10:48 INFO: Subdevice 1 produced empty frame
+2021-06-11 00:10:48 INFO: Subdevice 1 produced empty frame
+2021-06-11 00:10:48 INFO: Subdevice 1 produced empty frame
+2021-06-11 00:12:15 INFO: UVC device detected with VID = 0x8086 PID = 0xaa5
+2021-06-11 00:12:15 INFO: USB Port number =2-2
+2021-06-11 00:12:15 INFO: Connecting to Intel RealSense SR300
+2021-06-11 00:12:15 INFO: Subdevice 0 produced empty frame
+2021-06-11 00:12:15 INFO: Subdevice 0 produced empty frame
+2021-06-11 00:12:15 INFO: Subdevice 0 produced empty frame
+2021-06-11 00:12:15 INFO: Subdevice 0 produced empty frame
+2021-06-11 00:12:15 INFO: Subdevice 1 produced empty frame
+2021-06-11 00:12:15 INFO: Subdevice 1 produced empty frame
+2021-06-11 00:12:15 INFO: Subdevice 1 produced empty frame
+2021-06-11 00:12:15 INFO: Subdevice 1 produced empty frame
+2021-06-11 00:23:08 INFO: UVC device detected with VID = 0x8086 PID = 0xaa5
+2021-06-11 00:23:08 INFO: USB Port number =2-2
+2021-06-11 00:23:08 INFO: Connecting to Intel RealSense SR300
+2021-06-11 00:23:08 INFO: Subdevice 0 produced empty frame
+2021-06-11 00:23:08 INFO: Subdevice 0 produced empty frame
+2021-06-11 00:23:08 INFO: Subdevice 0 produced empty frame
+2021-06-11 00:23:08 INFO: Subdevice 0 produced empty frame
+2021-06-11 00:23:08 INFO: Subdevice 1 produced empty frame
+2021-06-11 00:23:08 INFO: Subdevice 1 produced empty frame
+2021-06-11 00:23:08 INFO: Subdevice 1 produced empty frame
+2021-06-11 00:23:08 INFO: Subdevice 1 produced empty frame
+2021-06-11 00:25:40 INFO: UVC device detected with VID = 0x8086 PID = 0xaa5
+2021-06-11 00:25:40 INFO: USB Port number =2-2
+2021-06-11 00:25:40 INFO: Connecting to Intel RealSense SR300
+2021-06-11 00:25:40 INFO: Subdevice 0 produced empty frame
+2021-06-11 00:25:40 INFO: Subdevice 0 produced empty frame
+2021-06-11 00:25:40 INFO: Subdevice 0 produced empty frame
+2021-06-11 00:25:40 INFO: Subdevice 0 produced empty frame
+2021-06-11 00:25:40 INFO: Subdevice 1 produced empty frame
+2021-06-11 00:25:40 INFO: Subdevice 1 produced empty frame
+2021-06-11 00:25:40 INFO: Subdevice 1 produced empty frame
+2021-06-11 00:25:40 INFO: Subdevice 1 produced empty frame
+2021-06-11 00:31:22 INFO: UVC device detected with VID = 0x8086 PID = 0xaa5
+2021-06-11 00:31:22 INFO: USB Port number =2-2
+2021-06-11 00:31:22 INFO: Connecting to Intel RealSense SR300
+2021-06-11 00:31:22 INFO: Subdevice 0 produced empty frame
+2021-06-11 00:31:22 INFO: Subdevice 0 produced empty frame
+2021-06-11 00:31:22 INFO: Subdevice 0 produced empty frame
+2021-06-11 00:31:22 INFO: Subdevice 0 produced empty frame
+2021-06-11 00:31:22 INFO: Subdevice 1 produced empty frame
+2021-06-11 00:31:22 INFO: Subdevice 1 produced empty frame
+2021-06-11 00:31:22 INFO: Subdevice 1 produced empty frame
+2021-06-11 00:31:22 INFO: Subdevice 1 produced empty frame
+2021-06-11 00:33:07 INFO: UVC device detected with VID = 0x8086 PID = 0xaa5
+2021-06-11 00:33:07 INFO: USB Port number =2-2
+2021-06-11 00:33:07 INFO: Connecting to Intel RealSense SR300
+2021-06-11 00:33:07 INFO: Subdevice 0 produced empty frame
+2021-06-11 00:33:07 INFO: Subdevice 0 produced empty frame
+2021-06-11 00:33:07 INFO: Subdevice 0 produced empty frame
+2021-06-11 00:33:07 INFO: Subdevice 0 produced empty frame
+2021-06-11 00:33:07 INFO: Subdevice 1 produced empty frame
+2021-06-11 00:33:07 INFO: Subdevice 1 produced empty frame
+2021-06-11 00:33:07 INFO: Subdevice 1 produced empty frame
+2021-06-11 00:33:07 INFO: Subdevice 1 produced empty frame
+2021-06-11 00:34:47 INFO: UVC device detected with VID = 0x8086 PID = 0xaa5
+2021-06-11 00:34:47 INFO: USB Port number =2-2
+2021-06-11 00:34:47 INFO: Connecting to Intel RealSense SR300
+2021-06-11 00:34:47 INFO: Subdevice 0 produced empty frame
+2021-06-11 00:34:47 INFO: Subdevice 0 produced empty frame
+2021-06-11 00:34:47 INFO: Subdevice 0 produced empty frame
+2021-06-11 00:34:47 INFO: Subdevice 0 produced empty frame
+2021-06-11 00:34:47 INFO: Subdevice 1 produced empty frame
+2021-06-11 00:34:47 INFO: Subdevice 1 produced empty frame
+2021-06-11 00:34:47 INFO: Subdevice 1 produced empty frame
+2021-06-11 00:34:47 INFO: Subdevice 1 produced empty frame
+2021-06-11 00:41:49 INFO: UVC device detected with VID = 0x8086 PID = 0xaa5
+2021-06-11 00:41:49 INFO: USB Port number =2-2
+2021-06-11 00:41:49 INFO: Connecting to Intel RealSense SR300
+2021-06-11 00:41:49 INFO: Subdevice 0 produced empty frame
+2021-06-11 00:41:49 INFO: Subdevice 0 produced empty frame
+2021-06-11 00:41:49 INFO: Subdevice 0 produced empty frame
+2021-06-11 00:41:49 INFO: Subdevice 0 produced empty frame
+2021-06-11 00:41:49 INFO: Subdevice 1 produced empty frame
+2021-06-11 00:41:49 INFO: Subdevice 1 produced empty frame
+2021-06-11 00:41:49 INFO: Subdevice 1 produced empty frame
+2021-06-11 00:41:49 INFO: Subdevice 1 produced empty frame
+2021-06-11 00:45:08 INFO: UVC device detected with VID = 0x8086 PID = 0xaa5
+2021-06-11 00:45:08 INFO: USB Port number =2-2
+2021-06-11 00:45:08 INFO: Connecting to Intel RealSense SR300
+2021-06-11 00:45:08 INFO: Subdevice 0 produced empty frame
+2021-06-11 00:45:08 INFO: Subdevice 0 produced empty frame
+2021-06-11 00:45:08 INFO: Subdevice 0 produced empty frame
+2021-06-11 00:45:08 INFO: Subdevice 0 produced empty frame
+2021-06-11 00:45:08 INFO: Subdevice 1 produced empty frame
+2021-06-11 00:45:08 INFO: Subdevice 1 produced empty frame
+2021-06-11 00:45:08 INFO: Subdevice 1 produced empty frame
+2021-06-11 00:45:08 INFO: Subdevice 1 produced empty frame
+2021-06-11 00:51:25 INFO: UVC device detected with VID = 0x8086 PID = 0xaa5
+2021-06-11 00:51:25 INFO: USB Port number =2-2
+2021-06-11 00:51:25 INFO: Connecting to Intel RealSense SR300
+2021-06-11 00:51:25 INFO: Subdevice 0 produced empty frame
+2021-06-11 00:51:25 INFO: Subdevice 0 produced empty frame
+2021-06-11 00:51:25 INFO: Subdevice 0 produced empty frame
+2021-06-11 00:51:25 INFO: Subdevice 0 produced empty frame
+2021-06-11 00:51:25 INFO: Subdevice 1 produced empty frame
+2021-06-11 00:51:25 INFO: Subdevice 1 produced empty frame
+2021-06-11 00:51:25 INFO: Subdevice 1 produced empty frame
+2021-06-11 00:51:25 INFO: Subdevice 1 produced empty frame
+2021-06-11 01:02:08 INFO: UVC device detected with VID = 0x8086 PID = 0xaa5
+2021-06-11 01:02:08 INFO: USB Port number =2-2
+2021-06-11 01:02:08 INFO: Connecting to Intel RealSense SR300
+2021-06-11 01:02:08 INFO: Subdevice 0 produced empty frame
+2021-06-11 01:02:08 INFO: Subdevice 0 produced empty frame
+2021-06-11 01:02:08 INFO: Subdevice 0 produced empty frame
+2021-06-11 01:02:08 INFO: Subdevice 0 produced empty frame
+2021-06-11 01:02:08 INFO: Subdevice 1 produced empty frame
+2021-06-11 01:02:08 INFO: Subdevice 1 produced empty frame
+2021-06-11 01:02:08 INFO: Subdevice 1 produced empty frame
+2021-06-11 01:02:08 INFO: Subdevice 1 produced empty frame
+2021-06-11 01:06:18 INFO: UVC device detected with VID = 0x8086 PID = 0xaa5
+2021-06-11 01:06:18 INFO: USB Port number =2-2
+2021-06-11 01:06:18 INFO: Connecting to Intel RealSense SR300
+2021-06-11 01:06:18 INFO: Subdevice 0 produced empty frame
+2021-06-11 01:06:18 INFO: Subdevice 0 produced empty frame
+2021-06-11 01:06:18 INFO: Subdevice 0 produced empty frame
+2021-06-11 01:06:18 INFO: Subdevice 0 produced empty frame
+2021-06-11 01:06:18 INFO: Subdevice 1 produced empty frame
+2021-06-11 01:06:18 INFO: Subdevice 1 produced empty frame
+2021-06-11 01:06:18 INFO: Subdevice 1 produced empty frame
+2021-06-11 01:06:18 INFO: Subdevice 1 produced empty frame
+2021-06-11 01:10:57 INFO: UVC device detected with VID = 0x8086 PID = 0xaa5
+2021-06-11 01:10:57 INFO: USB Port number =2-2
+2021-06-11 01:10:57 INFO: Connecting to Intel RealSense SR300
+2021-06-11 01:10:57 INFO: Subdevice 0 produced empty frame
+2021-06-11 01:10:57 INFO: Subdevice 0 produced empty frame
+2021-06-11 01:10:57 INFO: Subdevice 0 produced empty frame
+2021-06-11 01:10:57 INFO: Subdevice 0 produced empty frame
+2021-06-11 01:10:57 INFO: Subdevice 1 produced empty frame
+2021-06-11 01:10:57 INFO: Subdevice 1 produced empty frame
+2021-06-11 01:10:57 INFO: Subdevice 1 produced empty frame
+2021-06-11 01:10:57 INFO: Subdevice 1 produced empty frame
+2021-06-11 01:28:51 INFO: UVC device detected with VID = 0x8086 PID = 0xaa5
+2021-06-11 01:28:51 INFO: USB Port number =2-2
+2021-06-11 01:28:51 INFO: Connecting to Intel RealSense SR300
+2021-06-11 01:28:51 INFO: Subdevice 0 produced empty frame
+2021-06-11 01:28:51 INFO: Subdevice 0 produced empty frame
+2021-06-11 01:28:51 INFO: Subdevice 0 produced empty frame
+2021-06-11 01:28:51 INFO: Subdevice 0 produced empty frame
+2021-06-11 01:28:51 INFO: Subdevice 1 produced empty frame
+2021-06-11 01:28:51 INFO: Subdevice 1 produced empty frame
+2021-06-11 01:28:51 INFO: Subdevice 1 produced empty frame
+2021-06-11 01:28:51 INFO: Subdevice 1 produced empty frame
+2021-06-11 01:30:56 INFO: UVC device detected with VID = 0x8086 PID = 0xaa5
+2021-06-11 01:30:56 INFO: USB Port number =2-2
+2021-06-11 01:30:56 INFO: Connecting to Intel RealSense SR300
+2021-06-11 01:30:56 INFO: Subdevice 0 produced empty frame
+2021-06-11 01:30:56 INFO: Subdevice 0 produced empty frame
+2021-06-11 01:30:56 INFO: Subdevice 0 produced empty frame
+2021-06-11 01:30:56 INFO: Subdevice 0 produced empty frame
+2021-06-11 01:30:56 INFO: Subdevice 1 produced empty frame
+2021-06-11 01:30:56 INFO: Subdevice 1 produced empty frame
+2021-06-11 01:30:56 INFO: Subdevice 1 produced empty frame
+2021-06-11 01:30:56 INFO: Subdevice 1 produced empty frame
+2021-06-11 01:32:29 INFO: UVC device detected with VID = 0x8086 PID = 0xaa5
+2021-06-11 01:32:29 INFO: USB Port number =2-2
+2021-06-11 01:32:29 INFO: Connecting to Intel RealSense SR300
+2021-06-11 01:32:29 INFO: Subdevice 0 produced empty frame
+2021-06-11 01:32:29 INFO: Subdevice 0 produced empty frame
+2021-06-11 01:32:29 INFO: Subdevice 0 produced empty frame
+2021-06-11 01:32:29 INFO: Subdevice 0 produced empty frame
+2021-06-11 01:32:29 INFO: Subdevice 1 produced empty frame
+2021-06-11 01:32:29 INFO: Subdevice 1 produced empty frame
+2021-06-11 01:32:29 INFO: Subdevice 1 produced empty frame
+2021-06-11 01:32:29 INFO: Subdevice 1 produced empty frame
+2021-06-11 01:43:05 INFO: UVC device detected with VID = 0x8086 PID = 0xaa5
+2021-06-11 01:43:05 INFO: USB Port number =2-2
+2021-06-11 01:43:05 INFO: Connecting to Intel RealSense SR300
+2021-06-11 01:43:05 INFO: Subdevice 0 produced empty frame
+2021-06-11 01:43:05 INFO: Subdevice 0 produced empty frame
+2021-06-11 01:43:05 INFO: Subdevice 0 produced empty frame
+2021-06-11 01:43:05 INFO: Subdevice 0 produced empty frame
+2021-06-11 01:43:05 INFO: Subdevice 1 produced empty frame
+2021-06-11 01:43:05 INFO: Subdevice 1 produced empty frame
+2021-06-11 01:43:05 INFO: Subdevice 1 produced empty frame
+2021-06-11 01:43:05 INFO: Subdevice 1 produced empty frame
+2021-06-11 01:48:47 INFO: UVC device detected with VID = 0x8086 PID = 0xaa5
+2021-06-11 01:48:47 INFO: USB Port number =2-2
+2021-06-11 01:48:47 INFO: Connecting to Intel RealSense SR300
+2021-06-11 01:48:47 INFO: Subdevice 0 produced empty frame
+2021-06-11 01:48:47 INFO: Subdevice 0 produced empty frame
+2021-06-11 01:48:47 INFO: Subdevice 0 produced empty frame
+2021-06-11 01:48:47 INFO: Subdevice 0 produced empty frame
+2021-06-11 01:48:47 INFO: Subdevice 1 produced empty frame
+2021-06-11 01:48:47 INFO: Subdevice 1 produced empty frame
+2021-06-11 01:48:47 INFO: Subdevice 1 produced empty frame
+2021-06-11 01:48:47 INFO: Subdevice 1 produced empty frame

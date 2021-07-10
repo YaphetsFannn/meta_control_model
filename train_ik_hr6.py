@@ -13,9 +13,11 @@ from fk_models import *
 from models import *
 # import pandas as pd
 import matplotlib as mpl
-# mpl.use('TkAgg')
+mpl.use('TkAgg')
 import matplotlib.pyplot as plt
-
+import train_fk_hr6
+plt.rcParams['font.sans-serif'] = ['Arial Unicode MS']
+import time
 #整体模型架构
 config = [
     ('linear', [3, 64]),
@@ -23,7 +25,7 @@ config = [
     # ('bn', [64]),
 
     ('linear', [64, 64]),
-    ('sigmoid', [True]),
+    ('relu', [True]),
     # # ('bn', [128]),
 
     # # # ('linear', [256, 128]),
@@ -67,19 +69,13 @@ def main(args):
         #整体模型架构
     generate_ = args.g
     is_delta_model = args.is_delta_model
+    fk_nn = ann_model(train_fk_hr6.config)
+    fk_nn.load_state_dict(torch.load("./model_trained/fk_net_param.pkl"))
 
-    if not is_delta_model:
-        if generate_:
-            inputs, outputs, test_inputs, test_outputs, _, _ = generate_data(1000, is_fk=args.is_fk)
-        else:
-            inputs, outputs, test_inputs, test_outputs, _, _ = load_data("./data/"+args.file+".txt", is_fk=args.is_fk,test_data_scale=0.2)
+    if generate_:
+        inputs, outputs, test_inputs, test_outputs, _, _ = generate_data(1000, is_fk=args.is_fk)
     else:
-        q_0 = np.array([1.33,1.02,0.25,0.29,0.3,0.2])
-        pku_hr6 = get_Robot()
-        p_0 = pku_hr6.cal_fk(q_0)
-        inputs, outputs, test_set, delta_p_range, delta_q_range = generate_delta_data(q_0, p_0)
-        test_inputs = np.array(test_set[0])
-        test_outputs = np.array(test_set[1])
+        inputs, outputs, test_inputs, test_outputs, _, _ = load_data("./data/"+args.file+".txt",training_nums=args.n)
     test_set = [test_inputs.astype(float), test_outputs.astype(float)]
     inputs = inputs.astype(float)
     outputs = outputs.astype(float)
@@ -96,82 +92,128 @@ def main(args):
 
     ik_nn = ann_model(config)
     if args.l:
-        print("load models!")
-        ik_nn.load_state_dict(torch.load("./model_trained/meta_ik.pkl"))
+        print("load pretrain models!")
+        ik_nn.load_state_dict(torch.load("./model_trained/net_param.pkl"))
+        # print(ik_nn.state_dict())
+    if args.m:
+        print("load meta models!")
+        ik_nn.load_state_dict(torch.load("./model_trained/meta_ik_rjoint_2.pkl",map_location=torch.device('cpu')))
     #损失函数
     cost = torch.nn.MSELoss(reduction='mean')
     #参数
-    optimizer_ik = torch.optim.Adam(ik_nn.parameters(), lr = 0.0005,betas=(0.9,0.999))
+    if args.l2:
+        optimizer_ik = torch.optim.Adam(ik_nn.parameters(), lr = 0.001,betas=(0.9,0.999),weight_decay=0.001)
+    else:
+        optimizer_ik = torch.optim.Adam(ik_nn.parameters(), lr = 0.001,betas=(0.9,0.999))
     # 训练网络
     losses_train = []
     batch_size = args.batch_size
-    pku_hr6 = get_Robot()
+    # pku_hr6 = get_Robot()
+    links_len = np.array([-1.63, -20,12,11,10, -1,-3,0.68,])
+    pku_hr6 =  get_Robot_rand(links_len)
+    dis_test = []
     dis_train = []
     losses_test = []
-    batch_loss = []
+    test_x = torch.tensor(test_set[0], dtype = torch.float, requires_grad = False)
+    test_y = torch.tensor(test_set[1], dtype = torch.float, requires_grad = False)
+    with torch.no_grad():
+        prediction_ = ik_nn(test_x)
+        test_loss = cost(prediction_, test_y)
+        losses_test.append(test_loss.data.numpy())
+        p_pre_nn = fk_nn(prediction_)
+        p_pre_nn = np.array([inputs_[0:3]*p_range[1] + p_range[0] for inputs_ in p_pre_nn.data.numpy()])
+        p_real = np.array([inputs_[0:3]*p_range[1] + p_range[0] for inputs_ in test_x.data.numpy()])
+        dis = p_pre_nn - p_real
+        dis = np.array([np.linalg.norm(d) for d in dis])
+        dis_test.append(dis)
+
+        train_x = torch.tensor(inputs, dtype = torch.float, requires_grad = False)
+        train_y = torch.tensor(outputs, dtype = torch.float, requires_grad = False)
+        prediction_ = ik_nn(train_x)
+        test_loss = cost(prediction_, train_y)
+        losses_train.append(test_loss.data.numpy())
+        p_pre_nn = fk_nn(prediction_)
+        p_pre_nn = np.array([inputs_[0:3]*p_range[1] + p_range[0] for inputs_ in p_pre_nn.data.numpy()])
+        p_real = np.array([inputs_[0:3]*p_range[1] + p_range[0] for inputs_ in train_x.data.numpy()])
+        dis = p_pre_nn - p_real
+        dis = np.array([np.linalg.norm(d) for d in dis])
+        dis_train.append(dis)
+
     for i in range(args.epoch):
         if i % 1==0:
             # for test
             with torch.no_grad():
-                losses_train.append(np.mean(batch_loss))
-                test_x = torch.tensor(test_set[0], dtype = torch.float, requires_grad = False)
-                test_y = torch.tensor(test_set[1], dtype = torch.float, requires_grad = False)
-                prediction_ = ik_nn(test_x)
-                test_loss = cost(prediction_, test_y)
-                losses_test.append(test_loss.data.numpy())
-                print("************************* epoch ",i,"*************************")
-                print(i, " training loss ", np.mean(batch_loss), " test loss ", test_loss.data.numpy())
-                if is_delta_model:
-                    continue
-                else:
-                    if args.d:
-                        test_x = torch.tensor(test_set[0], dtype = torch.float, requires_grad = False)
-                        print("some datas:")
-                        print("inputs:")
-                        ii = test_x.data.numpy()[-1]
-                        print(ii)
-                        ii = ii*p_range[1] + p_range[0]
-                        print(ii)
-                        prediction_ = ik_nn(test_x)
-                        print("outputs:",prediction_.data.numpy()[-1])
-                        print("test_real",test_set[1][-1])                        
-                        joint_1 = [q_i * q_range[1] + q_range[0] for q_i in prediction_.data.numpy()]
-                        print("joint real:", (test_set[1][-1] * q_range[1] + q_range[0])/np.pi * 180)
-                        print("joint out:", joint_1[-1]/np.pi * 180)
+                if args.d:
+                    prediction_ = ik_nn(test_x)
+                    test_loss = cost(prediction_, test_y)
+                    losses_test.append(test_loss.data.numpy())
+                    print("************************* epoch ",i,"*************************")
+                    print("some datas:")
+                    print("inputs:")
+                    ii = test_x.data.numpy()[-1]
+                    print(ii)
+                    ii = ii*p_range[1] + p_range[0]
+                    print(ii)
+                    print("outputs:",prediction_.data.numpy()[-1])
+                    print("test_real",test_set[1][-1])
+                    joint_real = (test_set[1][-1] * q_range[1] + q_range[0])
+                    joint_out = [q_i * q_range[1] + q_range[0] for q_i in prediction_.data.numpy()]
+                    print("joint real:", joint_real/np.pi * 180)
+                    print("joint out:", joint_out[-1]/np.pi * 180)
+                    p_pre_fk = pku_hr6.cal_fk(joint_out[-1])
+                    p_real_fk = pku_hr6.cal_fk(joint_real)
+                    p_pre_nn = fk_nn(prediction_)
+                    p_pre_nn = np.array([inputs_[0:3]*p_range[1] + p_range[0] for inputs_ in p_pre_nn.data.numpy()])
+                    p_real = np.array([inputs_[0:3]*p_range[1] + p_range[0] for inputs_ in test_x.data.numpy()])
+                    print("p_real",p_real[-1])
+                    print("p_real_fk",p_real_fk)
+                    print("p_pre_1",p_pre_fk)
+                    print("p_pre_2",p_pre_nn[-1])
+                    dis = p_pre_nn - p_real
+                    dis = np.array([np.linalg.norm(d) for d in dis])
+                    print("mean dis nn:",np.array(dis).mean())
+                    dis_test.append(dis)
 
-                        p_pre = np.array([pku_hr6.cal_fk(joint_i) for joint_i in joint_1])
-                        p_real = [inputs_[0:3]*p_range[1] + p_range[0] for inputs_ in test_x.data.numpy()]
-                        print("p_real",p_real[-1])
-                        print("p_pre",p_pre[-1])
-                        # print("joint_out",joint_1[-1])
-                        dist_0 = []
-                        for i in range(0,p_pre.shape[0]):
-                            tmp = np.array(p_pre[i] - p_real[i], dtype=np.float64)
-                            dist_0.append(np.linalg.norm(tmp))
-                        print("mean dis:",np.array(dist_0).mean())
-                        dis_train.append(dist_0)
+                    train_x = torch.tensor(inputs, dtype = torch.float, requires_grad = False)
+                    train_y = torch.tensor(outputs, dtype = torch.float, requires_grad = False)
+                    prediction_ = ik_nn(train_x)
+                    print(train_y.shape)
+                    print(prediction_.shape)
+                    train_loss = cost(prediction_, train_y)
+                    losses_train.append(train_loss.data.numpy())
+                    p_pre_nn = fk_nn(prediction_)
+                    p_pre_nn = np.array([inputs_[0:3]*p_range[1] + p_range[0] for inputs_ in p_pre_nn.data.numpy()])
+                    p_real = np.array([inputs_[0:3]*p_range[1] + p_range[0] for inputs_ in train_x.data.numpy()])
+                    dis = p_pre_nn - p_real
+                    dis = np.array([np.linalg.norm(d) for d in dis])
+                    dis_train.append(dis)
+                    print(i, " training loss ", train_loss.data.numpy(), " test loss ", test_loss.data.numpy())
+                    print("**********************************************************")
+
+
                     
         batch_loss = []
         # MINI-Batch方法来进行训练
         for start in range(0, len(inputs), batch_size):
             end = start + batch_size if start + batch_size < len(inputs) else len(inputs)
-            # xx = torch.tensor(inputs[start:end], dtype = torch.float, requires_grad = True)
-            # yy = torch.tensor(outputs[start:end], dtype = torch.float, requires_grad = True)
-            rand_index = np.random.randint(0, len(inputs), batch_size)
-            xx = torch.tensor(inputs[rand_index], dtype = torch.float, requires_grad = True)
-            yy = torch.tensor(outputs[rand_index], dtype = torch.float, requires_grad = True)
+            xx = torch.tensor(inputs[start:end], dtype = torch.float, requires_grad = True)
+            yy = torch.tensor(outputs[start:end], dtype = torch.float, requires_grad = True)
+            # rand_index = np.random.randint(0, len(inputs), min(len(inputs),batch_size))
+            # xx = torch.tensor(inputs[rand_index], dtype = torch.float, requires_grad = True)
+            # yy = torch.tensor(outputs[rand_index], dtype = torch.float, requires_grad = True)
+            # print("xx shape is ",xx.shape)
             prediction = ik_nn(xx)
             loss = cost(prediction, yy)
             batch_loss.append(loss.data.numpy())
-            
             optimizer_ik.zero_grad()
             loss.backward(retain_graph=True)
             optimizer_ik.step()
-        # dis_train.append(batch_loss)
-    with open("./data/ik_loss_val.txt","w") as wf:
+
+        # dis_test.append(batch_loss)
+    with open("./logs/ik/ik_loss_val_"+args.name+".txt","w") as wf:
         for loss in losses_test:
             wf.write(str(loss)+'\n')
-    with open("./data/ik_loss_tran.txt","w") as wf:
+    with open("./logs/ik/ik_loss_train_"+args.name+".txt","w") as wf:
         for loss in losses_train:
             wf.write(str(loss)+'\n')
     if args.d:
@@ -180,39 +222,52 @@ def main(args):
         dis_mean = []
         for i in range(len(dis_train)):
             loss_i = np.array(dis_train[i])
-            # dis_min.append(loss_i.min())
-            # dis_max.append(loss_i.max())
             dis_min.append(np.percentile(loss_i,25))
             dis_max.append(np.percentile(loss_i,75))
             dis_mean.append(loss_i.mean())
-        with open("./data/ik_dis.txt","w") as wf:
+        plt.plot(range(len(dis_train)),dis_mean,color='g',label=u"训练集")
+        with open("./logs/ik/ik_dis_train_"+args.name+".txt","w") as wf:
+            for d_min,d_max,d_mean in zip(dis_min,dis_max,dis_mean):
+                wf.write(str(d_min)+","+str(d_max)+","+str(d_mean)+'\n')
+        dis_min = []
+        dis_max = []
+        dis_mean = []
+        for i in range(len(dis_test)):
+            loss_i = np.array(dis_test[i])
+            dis_min.append(np.percentile(loss_i,25))
+            dis_max.append(np.percentile(loss_i,75))
+            dis_mean.append(loss_i.mean())
+        with open("./logs/ik/ik_dis_test_"+args.name+".txt","w") as wf:
             for d_min,d_max,d_mean in zip(dis_min,dis_max,dis_mean):
                 wf.write(str(d_min)+","+str(d_max)+","+str(d_mean)+'\n')
         # plt.legend(loc='lower right', frameon=False) # 图例在图形里面
         # plt.legend(loc=8, frameon=False, bbox_to_anchor=(0.5,-0.3))# 图例在图形外面
         print("mean dis:")
         print(dis_mean[-1])
-        plt.plot(range(len(dis_train)),dis_mean)
-        plt.xlabel('epoch')
+        plt.plot(range(len(dis_test)),dis_mean,color='r',label=u"测试集")
+        plt.xlabel(u"迭代次数")
         # plt.ylabel('mse loss')
-        plt.ylabel('distance between p\' and p (cm)')
-        plt.fill_between(range(len(dis_train)),
+        plt.ylabel(u'反向模型精度 (cm)')
+        plt.fill_between(range(len(dis_test)),
                         dis_min,
                         dis_max,
                         color='b',
-                        alpha=0.2)
+                        alpha=0.2,label=u"测试集误差区间")
+        plt.legend(loc='upper right', fontsize=10)
         plt.show()
         plt.clf()
-        plt.plot(range(len(losses_test)),losses_test,label="loss_val")
-        plt.plot(range(len(losses_train)),losses_train,label="loss_train")
-        plt.xlabel('epoch')
-        plt.ylabel('mse loss')
+        plt.plot(range(len(losses_test)),losses_test,label=u"测试集",color='r')
+        plt.plot(range(len(losses_train)),losses_train,label=u"训练集",color='g')
+        plt.xlabel(u"迭代次数")
+        plt.ylabel(u"损失函数值")
+        plt.legend(loc='upper right', fontsize=10)
         plt.show()
     if args.s:
         PATH = "./model_trained/net_param.pkl"
         torch.save(ik_nn.state_dict(), PATH)
+        print("save model in",PATH)
         torch.save(ik_nn, "./model_trained/net.pkl")
-    # with open("./model_trained/min_max.txt","w") as wf:
+    # with open("./model_trained/min_max_"+args.file+".txt","w") as wf:
     #     for min_q in q_range[0]:
     #         wf.write(str(min_q)+",")
     #     for i in range(6):
@@ -229,10 +284,22 @@ def main(args):
     #             wf.write(",")
     #         else:
     #             wf.write("\n")
+    position_tgt = [33.68, -14.7283, 6.9515]
+    from train_delta_ik_hr6 import get_ik_res
+    joint_ik = get_ik_res(ik_nn,position_tgt,q_range,p_range)
+    position_cur = pku_hr6.cal_fk(joint_ik)
+    print("tgt_p,cur p :",position_tgt,position_cur,cal_dis(position_tgt,position_cur))
+    
+    # start = time.clock()
+    # p_i =  torch.tensor(inputs[-1], dtype = torch.float, requires_grad = True)
+    # q_i = ik_nn(p_i)
+    # end = time.clock()
+    # print('Running time: %s Seconds'%(end-start))
     
 
 
 if __name__ == "__main__":
+    start = time.clock()
     argparser = argparse.ArgumentParser()
     argparser.add_argument('--epoch', type=int, help='epoch number', default=200)
     argparser.add_argument('--n_way', type=int, help='n way', default=5)
@@ -255,6 +322,8 @@ if __name__ == "__main__":
                                 help='generate radom datas or using true data', default=False)
     argparser.add_argument('--file', type=str, \
                             help='file name', default="real_data")
+    argparser.add_argument('--name', type=str, \
+                            help='file name', default="test")
     argparser.add_argument('--is_delta_model', type=bool, \
                                 help='if needs to train a delta_p -> delta_q models', default=False)
     argparser.add_argument('--d', type=bool, \
@@ -263,5 +332,13 @@ if __name__ == "__main__":
                             help='if load model', default=False)
     argparser.add_argument('--s', type=bool, \
                             help='if load model', default=False)
+    argparser.add_argument('--m', type=bool, \
+                        help='if meta model', default=False)
+    argparser.add_argument('--l2', type=bool, \
+                        help='if l2 loss', default=False)
+    argparser.add_argument('--n', type=int, \
+                            help='nums of training date', default=500)
     args = argparser.parse_args()
     main(args)
+    end = time.clock()
+    print('Running time: %s Seconds'%(end-start))

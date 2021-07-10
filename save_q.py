@@ -164,23 +164,23 @@ def main(args):
             cv2.imshow("res", res)
             # print(depth_point)
 
-            # msg = rospy.wait_for_message('/motor_states/pan_tilt_port',MotorStateList,timeout=10)
-            # # print(len(msg.motor_states))
-            # joints,valid_q = get_joint_angle(msg)
-            # if valid_p and valid_q:
-            #     depth_point = np.array(depth_point)
-            #     # print(joints)
-            #     # print(depth_point)
-            #     if args.only_q:
-            #         data = joints
-            #     else:   
-            #         data = np.append(depth_point, joints)
-            #     print(data)
-            #     datas.append(data)
-            # if args.t: # pubulish joint
-            #     data = tracking_datas[count]
-            #     Pubs.publish_jointsD(data)
-            #     count = count + 1
+            msg = rospy.wait_for_message('/motor_states/pan_tilt_port',MotorStateList,timeout=10)
+            # print(len(msg.motor_states))
+            joints,valid_q = get_joint_angle(msg)
+            if valid_p and valid_q:
+                depth_point = np.array(depth_point)
+                # print(joints)
+                # print(depth_point)
+                if args.only_q:
+                    data = joints
+                else:   
+                    data = np.append(depth_point, joints)
+                print(data)
+                datas.append(data)
+            if args.t: # pubulish joint
+                data = tracking_datas[count]
+                Pubs.publish_jointsD(data)
+                count = count + 1
             if cv2.waitKey(100) & 0xFF == ord('q'):   # quit
                 break
         for data in datas:
@@ -197,7 +197,7 @@ def main(args):
 if __name__ == "__main__":
     argparser = argparse.ArgumentParser()
     argparser.add_argument('--n', type=int, help='number of datas', default=300)
-    argparser.add_argument('--file', type=str, help='file name(or path)', default="q_p_data")
+    argparser.add_argument('--file', type=str, help='file name(or path)', default="arm_running_300")
     argparser.add_argument('--only_q', type=bool, help='type of save datas, only q or p&q', default=False)
     argparser.add_argument('--t', type=bool, help='read track from file', default=False)
     
